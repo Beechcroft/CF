@@ -1,0 +1,2996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CASHFLOW® Auditor - v12.47 (Home Stretch)</title>
+    <style>
+        :root { 
+            --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; 
+            --purple: #bb86fc; --gold: #cfbc41; --green: #03dac6; --red: #cf6679; 
+            --cyan: #03a9f4; --dark-grey: #262626; --orange: #ff9800;
+            --input-bg: #2c2c2c; --input-border: #444;
+			
+			        /* Fast Track palette – vibrant but dark */
+			--ft-bg: #0f1a2a;
+			--ft-card: #0d1f3a;
+			--ft-text: #e0f7ff;
+			--ft-blue: #00d4ff;
+			--ft-orange: #ff9500;
+			--ft-gold: #ffd700;
+        }
+       body {
+			font-family: 'Segoe UI', sans-serif;
+			background: var(--bg);
+			color: var(--text);
+			margin: 0;
+			padding: 0;                     /* remove any body padding */
+			display: block;                 /* ← key: no more flex centering */
+		}
+		
+        .btn-escape { background: var(--gold); color: #000; width: 100%; font-size: 1.2em; padding: 12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; margin-bottom: 10px; display: none; text-align: center; box-sizing: border-box; }
+        
+        .id-bar {
+			display: flex;
+			gap: 30px;
+			margin-bottom: 20px;
+			border-bottom: 1px solid #333;
+			padding-bottom: 15px;
+			flex-wrap: wrap;
+			justify-content: center;
+			align-items: flex-start;          /* ← change to flex-start: aligns tops of columns */
+		}
+
+		.id-field {
+			flex: 1;
+			min-width: 220px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			text-align: center;
+		}
+		
+		/* Make labels same height + consistent spacing */
+		.id-field label,
+		.id-field > span {
+			font-size: 0.85em;
+			font-weight: bold;
+			margin-bottom: 8px;               /* uniform space below label */
+			white-space: nowrap;
+			min-height: 1.2em;                /* prevents label shift if one wraps */
+		}
+		
+		/* Random button: keep it below dropdown but don't let it push the whole field up */
+		.id-field .action-btn {
+			margin-top: 8px;                  /* small space from dropdown */
+			align-self: center;               /* centers button under dropdown */
+		}
+		
+        .id-field input, .id-field select { background: var(--input-bg); border: 1px solid var(--input-border); padding: 8px; border-radius: 4px; color: var(--text); width: 100%; text-align: left; }
+        .btn-save { background: #333; color: var(--gold); padding: 5px 12px; border: 1px solid var(--gold); border-radius: 4px; cursor: pointer; font-size: 0.75em; text-transform: uppercase; font-weight: bold; }
+        .dice-btn { background: var(--purple); color: #000; border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8em; }
+        .dice-result { color: var(--green); font-weight: bold; font-size: 1.1em; min-width: 25px; text-align: center; }
+
+        .header { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-bottom: 4px solid var(--purple); }
+        .stat-box .stat-value {
+			font-size: 2.0em;
+			font-weight: bold;
+			text-align: right;
+			width: 100%;
+			padding: 8px 12px;                 /* ← add right padding so numbers don't hug edge */
+			border-radius: 6px;
+			background: var(--input-bg);
+			border: 1px solid var(--input-border);
+			color: inherit;
+			box-sizing: border-box;
+		}
+        .stat-label { font-size: 0.9em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+        #cashValue { color: var(--green); }
+		/* Visual feedback for readonly Savings field */
+		#cashValue[readonly] {background: #222;           /* darker than normal inputs */color: #aaa;                /* muted text */cursor: default;            /* no text cursor */opacity: 0.9;               /* subtle hint it's locked */}
+        #flowDisp { color: var(--purple); pointer-events: none; user-select: none; cursor: default; }
+
+        .progress-container {
+            margin-top: 8px;
+            background: #333;
+            border-radius: 6px;
+            height: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--green), var(--cyan));
+            transition: width 0.6s ease;
+        }
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-shadow: 0 0 4px black;
+            pointer-events: none;
+        }
+
+        .profession-card {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .card-inner {
+            perspective: 1000px;
+            width: 320px;
+            height: 420px;
+            transition: transform 1.2s ease;
+            transform-style: preserve-3d;
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, var(--purple), var(--gold));
+            color: white;
+            transform: rotateY(0deg);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, var(--green), var(--cyan));
+            color: #000;
+            transform: rotateY(180deg);
+        }
+
+        .card-symbol {
+            font-size: 6em;
+            margin: 20px 0;
+        }
+
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        h1 { color: var(--purple); font-size: 1.1em; text-transform: uppercase; margin: 10px 0; border-left: 4px solid var(--purple); padding-left: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .quadrant { background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #2a2a2a; }
+
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; align-items: center; }
+        .total-display-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.3em; padding: 12px; background: var(--dark-grey); border-radius: 6px; margin-top: 15px; border: 1px solid #333; }
+        
+        input, select { background: var(--input-bg); color: #fff; border: 1px solid var(--input-border); padding: 8px; border-radius: 4px; font-size: 1.1em; }
+        input[type="number"] { text-align: right; }
+        
+        .action-bar {
+			width: 100%;
+			max-width: 800px;           /* wider than before, adjust if needed */
+			margin: 30px auto 40px auto; /* good vertical spacing + centered */
+			padding: 0 15px;
+			box-sizing: border-box;
+		}
+
+        .btn-payday {
+			width: 100% !important;
+			min-height: 60px;           /* taller for emphasis */
+			font-size: 1.5em !important;
+			padding: 20px 30px !important;
+			border-radius: 12px !important;
+			box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5) !important;
+			transition: all 0.25s ease !important;
+		}
+		.btn-payday:hover {
+			transform: translateY(-3px);
+			box-shadow: 0 12px 30px rgba(0, 212, 255, 0.5) !important;
+		}
+
+        .ledger { width: 100%; font-size: 0.85em; border-collapse: collapse; margin-bottom: 10px; }
+        .ledger td { padding: 8px; border-bottom: 1px solid #2c2c2c; }
+        
+        .action-btn { font-size: 0.7em; padding: 4px 8px; cursor: pointer; background: #444; color: #eee; border: 1px solid #666; border-radius: 3px; }
+        .action-btn:hover { background: #555; }
+        
+        .add-zone { background: #252525; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #333; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        
+        .history-container { margin-top: 30px; background: #000; padding: 15px; border-radius: 8px; border: 1px solid var(--purple); position: relative; }
+        .history-list { font-family: 'Courier New', monospace; font-size: 0.85em; height: 140px; overflow-y: auto; color: #aaa; }
+        
+        .ft-badge[style*="display: inline-block"] {display: inline-block !important;}
+
+        .liability-bank   { color: var(--red);    font-weight: bold; }
+        .liability-expense{ color: var(--green);   font-weight: bold; }
+        .liability-re     { color: var(--gold);   font-weight: bold; }
+        .liability-biz    { color: var(--purple); font-weight: bold; }
+
+        .expense-with-debt td:first-child,
+        .expense-with-debt td:nth-child(2) { color: var(--green); font-weight: bold; }
+		
+		.sheet { transition: opacity 0.6s ease; }
+		.sheet[style*="display: none"] { opacity: 0; }
+		.sheet[style*="display: block"] { opacity: 1; }
+
+        input[type=number] { -moz-appearance: textfield; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        #expAdd input { width: 80px; flex: 0 1 auto; }
+        #expAdd button { min-width: 60px; }
+		#editCashBtn {background: var(--gold);color: #000;}
+        #stockAdd input[id="sName"] { width: 70px; flex: 0 1 auto; }
+        #stockAdd input[type="number"] { width: 60px; }
+        #stockAdd button { min-width: 60px; }
+        #reAdd input[id="reName"], #bizAdd input[id="bizName"] { width: 70px; flex: 0 1 auto; }
+        #reAdd input[type="number"], #bizAdd input[type="number"] { width: 65px; }
+        #reAdd button, #bizAdd button { min-width: 60px; }
+        #loanAdd input { width: 120px; }
+        #perChildCost { width: 60px; }
+
+        .child-row { color: var(--green); border:none; padding: 8px 0; font-size: 1.1em; }
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999; }
+
+        #loadStatus { 
+            color: var(--orange); font-size: 0.9em; margin: 10px 0; padding: 8px; background: #222; border-radius: 6px; display: none; 
+            transition: opacity 1s ease; opacity: 1;
+        }
+
+        body::-webkit-scrollbar { width: 8px; }
+        body::-webkit-scrollbar-track { background: var(--dark-grey); }
+        body::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 4px; }
+        body { scrollbar-width: thin; scrollbar-color: var(--purple) var(--dark-grey); }
+
+        #fastTrackSheet {
+            display: none;
+            background: var(--ft-bg);
+            width: 100%;
+            max-width: 1100px;
+			margin: 0 auto;
+            border: 3px solid var(--ft-orange);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(255, 149, 0, 0.3);
+        }
+
+        .ft-title {
+			font-size: 2.6em;                  /* slightly smaller → better proportion */
+			color: var(--ft-gold);
+			text-align: center;
+			margin: 16px 0 28px;               /* reduced top margin */
+			text-shadow: 0 0 18px var(--ft-orange);
+			letter-spacing: 1px;
+		}
+
+        #flipBackBtn {
+            background: linear-gradient(135deg, var(--ft-blue), var(--ft-orange));
+            color: #000;
+            font-size: 1.4em;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            max-width: 500px;
+            margin: 30px auto;
+            display: block;
+            box-shadow: 0 0 20px rgba(255, 149, 0, 0.5);
+        }
+
+        #flipBackBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
+        }
+		
+		.save-bar {
+		position: sticky;
+		top: 0;
+		z-index: 1000;
+		width: 100%;
+		max-width: 1200px;
+		margin: 0 auto 25px auto;
+		background: #1e1e1e;
+		border-bottom: 2px solid #444;
+		padding: 12px 24px;               /* slightly more side padding */
+		box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+		
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 20px;                         /* increased gap → more breathing room */
+		flex-wrap: nowrap;
+	}
+	
+	.save-bar-section {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+
+	.save-bar > div:not(#ftBadge) {
+		flex: 0 1 auto;
+	}
+
+	.save-bar-left,
+	.save-bar-right {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex-wrap: wrap;
+	}
+
+	.save-bar-left button,
+	.save-bar-right button {
+		white-space: nowrap;
+	}
+
+	/* Dice area */
+	.dice-area {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		background: #252525;
+		padding: 6px 14px;
+		border-radius: 10px;
+		border: 1px solid #555;
+	}
+	
+	/* Reset button more distinct */
+	.reset-btn {
+		border-color: var(--red) !important;
+		color: var(--red) !important;
+		font-weight: bold;
+	}
+
+	#dice3Btn {
+		display: none;                  /* Hidden by default - JS controls it */
+		background: linear-gradient(135deg, var(--ft-blue), var(--ft-orange));
+		color: #000;
+		border: none;
+		padding: 6px 12px;
+		border-radius: 6px;
+		font-weight: bold;
+		cursor: pointer;
+		font-size: 0.9em;
+		box-shadow: 0 0 12px rgba(255, 149, 0, 0.5);
+	}
+
+	#dice3Btn:hover {
+		transform: scale(1.08);
+		box-shadow: 0 0 20px rgba(0, 212, 255, 0.7);
+	}
+
+	#ftBadge {
+		display: none;
+		background: var(--ft-orange);
+		color: #000;
+		padding: 10px 28px;                /* balanced width */
+		border-radius: 12px;
+		font-weight: bold;
+		font-size: 1.28em;                 /* slightly bigger but not huge */
+		text-transform: uppercase;
+		letter-spacing: 1.6px;
+		box-shadow: 0 4px 14px rgba(0,0,0,0.55);
+		white-space: nowrap;
+		text-align: center;
+		min-width: 220px;
+		max-width: 320px;                  /* tighter cap */
+		margin: 0 auto;                    /* center it */
+		flex: 0 0 auto;                    /* don't let it grow or shrink much */
+	}
+
+	/* Pull right side (dice + reset) a bit closer if needed */
+	.save-bar > div:last-child {
+		margin-left: auto;                 /* push it right */
+		justify-content: flex-end;
+	}
+
+	/* Consolidated Fast Track history styling */
+	#ftHistoryContainer {
+		margin-top: 30px;
+		background: #000;
+		padding: 15px;
+		border-radius: 8px;
+		border: 1px solid var(--ft-blue);
+		box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+		min-height: 300px;
+		height: 300px;
+		overflow-y: auto;
+		display: block !important;          /* Force show */
+		visibility: visible !important;
+		opacity: 1 !important;
+	}
+
+	#ftHistoryLog {
+		height: calc(100% - 30px);
+		min-height: 140px;
+		overflow-y: auto;
+		display: block !important;
+		font-family: 'Courier New', monospace;
+		font-size: 0.85em;
+		color: #e0f7ff;
+		background: rgba(0, 0, 0, 0.6);
+		padding: 10px;
+		box-sizing: border-box;
+		scroll-behavior: smooth;
+	}
+
+	/* Debug highlight when entries added */
+	#ftHistoryLog.has-entries {
+		border: 2px solid var(--ft-gold) !important;
+	}
+
+	/* ───────────────────────────────────────────────
+	   Fast Track header – natural flex + shrinking text on big numbers
+	   ─────────────────────────────────────────────── */
+
+	#fastTrackSheet .header {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+		padding: 16px;
+		background: rgba(13, 31, 58, 0.6);
+		border-radius: 12px;
+		border-bottom: 4px solid var(--ft-blue);
+	}
+
+	#fastTrackSheet .header .stat-box {
+		padding: 14px 16px;
+		background: rgba(0, 0, 0, 0.3);
+		border-radius: 10px;
+		border: 1px solid rgba(0, 212, 255, 0.25);
+		box-sizing: border-box;
+		/* No forced min/max-width — let them share space naturally */
+	}
+
+	#fastTrackSheet .stat-label {
+		font-size: 0.9em;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 1.2px;
+		color: var(--ft-gold);
+		margin-bottom: 8px;
+	}
+
+	#fastTrackSheet .stat-value {
+		font-weight: 700;
+		text-align: right;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		line-height: 1.18;
+		padding: 10px 14px;
+		border-radius: 8px;
+		background: rgba(0, 0, 0, 0.4);
+		border: 1px solid rgba(0, 212, 255, 0.3);
+		box-sizing: border-box;
+		width: 100%;
+		font-kerning: auto;
+	}
+
+	/* Wrapper for CASH edit field */
+	.cash-edit-wrapper {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		width: 100%;
+	}
+
+	/* CASH input – prevent collapse in edit mode, but allow shrink */
+	#ftCashDisp {
+		flex: 1 1 auto;
+		min-width: 120px;               /* Enough room for most numbers even when editing */
+		padding: 10px 14px;
+		box-sizing: border-box;
+	}
+
+	/* Edit/Done button – fixed width so layout doesn't jump */
+	.action-btn.edit-btn {
+		min-width: 100px;
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	/* Green "Done" mode */
+	.action-btn.edit-btn.done-mode {
+		background: var(--green) !important;
+		color: #000 !important;
+	}
+
+	/* Dynamic font-size that shrinks as numbers get longer */
+	#ftCashDisp,
+	#ftFlowDisp {
+		font-size: clamp(1.4em, 6vw, 2.6em);   /* Starts smaller, grows slower, caps reasonably */
+		letter-spacing: -0.5px;
+	}
+
+	/* CASH stays green */
+	#ftCashDisp {
+		color: var(--green);
+	}
+
+	/* CASH FLOW DAY stays larger + orange */
+	#ftFlowDisp {
+		font-size: clamp(1.6em, 7vw, 3em);     /* Slightly bigger emphasis */
+		color: var(--ft-orange);
+	}
+
+	/* Title cleanup */
+	.ft-title {
+		border-left: none !important;
+		padding-left: 0 !important;
+		margin: 20px 0 30px;
+		text-align: center;
+	}
+
+	/* Prevent horizontal scroll on huge numbers */
+	#fastTrackSheet {
+		overflow-x: hidden;
+	}
+
+	/* Mobile: stack vertically + allow text to grow/shrink more */
+	@media (max-width: 768px) {
+		#fastTrackSheet .header {
+			grid-template-columns: 1fr;
+			gap: 12px;
+		}
+		#ftCashDisp,
+		#ftFlowDisp {
+			font-size: clamp(1.8em, 10vw, 3.2em); /* Bigger base on mobile, but still scales */
+		}
+		#ftCashDisp {
+			min-width: 140px;                     /* A bit more room when stacked */
+		}
+	}
+	
+	.sheet {
+		width: 100%;
+		max-width: 1100px;          /* ← match Fast Track */
+		margin: 0 auto;             /* ← center both sheets */
+		padding: 0 15px;            /* optional: side breathing room on mobile */
+		box-sizing: border-box;
+	}
+	
+	/* Fast Track Payday Button */
+	.ft-payday-btn {
+		background: linear-gradient(135deg, var(--ft-blue), var(--ft-orange));
+		color: #000 !important;
+		font-size: 1.4em !important;
+		padding: 18px 24px !important;
+		border: none !important;
+		border-radius: 12px !important;
+		font-weight: bold !important;
+		cursor: pointer !important;
+		width: 100% !important;
+		text-align: center !important;
+		box-sizing: border-box !important;
+		box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+		text-shadow: none !important;
+		transition: all 0.3s ease !important;
+	}
+
+	.ft-payday-btn:hover {
+		transform: translateY(-2px) scale(1.02);
+		box-shadow: 0 12px 35px rgba(255, 149, 0, 0.6);
+	}
+
+	.ft-payday-btn:active {
+		transform: translateY(0) scale(1);
+	}
+
+	/* Force full-width feel in Fast Track */
+	#fastTrackSheet .action-bar {
+		max-width: 90%;             /* or 100% if you want edge-to-edge */
+		margin: 35px auto 50px auto;
+	}
+
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+	<div class="save-bar">
+		<div class="save-bar-section left">
+			<button class="btn-save" onclick="save(true)">💾 SAVE</button>
+			<button class="btn-save" onclick="manualLoad()">📂 LOAD</button>
+			<button class="btn-save" onclick="undo()">⟲ UNDO</button>
+		</div>
+
+		<span id="ftBadge" class="ft-badge">FAST TRACK ACTIVE</span>
+
+		<div class="save-bar-section right">
+			<div class="dice-area">
+				<button class="dice-btn" onclick="roll(1)">1🎲 Roll</button>
+				<button class="dice-btn" onclick="roll(2)">2🎲 Roll</button>
+				<button id="dice3Btn" class="dice-btn" onclick="roll(3)">3🎲 Roll</button>
+				<span id="diceRes" class="dice-result">-</span>
+			</div>
+			<button class="btn-save reset-btn" onclick="resetGame()">
+				🧹 NEW GAME
+			</button>
+		</div>
+	</div>
+
+	<div class="sheet" id="mainSheet">
+    <div id="loadStatus"></div>
+
+    <!-- Quick Start Guide -->
+    <div class="add-zone" style="background:#1e1e1e; margin-bottom:20px; padding:15px;">
+        <h1 style="margin:0 0 10px 0; font-size:1.2em;">Quick Start Guide</h1>
+        <details open>
+            <summary style="cursor:pointer; color:var(--gold); font-weight:bold;">Click to expand/collapse instructions</summary>
+            <ol style="margin:10px 0; line-height:1.5;">
+                <li><strong>Setup:</strong> Enter your name & auditor. Select or randomize a Profession (loads salary, expenses, debts, cash). Confirm the card flip.</li>
+                <li><strong>Payday:</strong> At the start of the game and when you pass "Payday" on the board, click <strong>COLLECT PAYDAY</strong> — adds your Cash Flow to Savings.</li>
+                <li><strong>Expenses/Children:</strong> Use dropdown for kids (0–3 from cards). Add regular expenses/debts via the form below. Pay off debts via Liability buttons.</li>
+                <li><strong>Assets:</strong> Buy Stocks/RE/Business — enter details, deducts down payment from cash. Passive income auto-updates.</li>
+                <li><strong>Doodads/One-time:</strong> Use the "− Deduct" button for impulse buys (logs automatically).</li>
+                <li><strong>Loans:</strong> Borrow via Liability section (adds cash + 10% mo interest expense).</li>
+                <li><strong>Escape:</strong> When Passive Income > Total Expenses, click <strong>ESCAPE THE RAT RACE!</strong> to enter Fast Track.</li>
+                <li><strong>Audit:</strong> Check the Game Log for every change. Use Undo if needed.</li>
+            </ol>
+            <p style="font-size:0.9em; color:#aaa;">This sheet is your live calculator + audit trail — no pencils needed!</p>
+        </details>
+    </div>
+
+    <div class="id-bar">
+        <div class="id-field">Player Name: <input type="text" id="pName" placeholder="Your name"></div>
+        <div class="id-field">
+            Profession: 
+            <select id="professionSelect" onchange="loadProfession()">
+                <option value="">Custom / Enter Manually</option>
+                <option value="Teacher">Teacher</option>
+                <option value="Doctor">Doctor</option>
+                <option value="Engineer">Engineer</option>
+                <option value="Lawyer">Lawyer</option>
+                <option value="Secretary">Secretary</option>
+                <option value="Truck Driver">Truck Driver</option>
+                <option value="Airline Pilot">Airline Pilot</option>
+                <option value="Mechanic">Mechanic</option>
+                <option value="Police Officer">Police Officer</option>
+            </select>
+            <button class="action-btn" onclick="randomProfession()" style="margin-left:10px;">🎲 Random Profession</button>
+        </div>
+        <div class="id-field">Auditor: <input type="text" id="aNameField" placeholder="Friend's name"></div>
+    </div>
+
+    <div class="header">
+        <div class="stat-box">
+		<span class="stat-label">Savings (Cash)</span>
+		<div style="display: flex; align-items: center; gap: 10px;">
+			<input type="text" id="cashValue" class="stat-value" 
+				   value="$2,000" readonly 
+				   style="text-align:right; flex: 1; background: var(--input-bg); border: 1px solid var(--input-border);">
+			<button id="editCashBtn" class="action-btn" style="font-size: 0.9em; padding: 6px 12px;">✏️ Edit</button>
+		</div>
+		<input type="hidden" id="cashInput" value="2000">
+	</div>
+        <div class="stat-box">
+            <span class="stat-label">Monthly Cash Flow</span>
+            <div class="stat-value" id="flowDisp">$0</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+                <div class="progress-text" id="progressText">0% to Escape</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="btn-payday" id="paydayBtn" onclick="doPayday()">➔ COLLECT PAYDAY</button>
+        <div id="escapeBtn" class="btn-escape" onclick="enterFastTrack()">🚀 ESCAPE THE RAT RACE!</div>
+    </div>
+
+    <div class="grid" id="gameGrid">
+        <div class="quadrant" id="incomeQuad">
+            <h1>Income</h1>
+            <div class="row" id="salRow">
+                Salary (monthly): 
+                <input type="number" id="sal" value="3000" min="0" onchange="handleSalaryChange(this)">
+            </div>
+            <table class="ledger"><tbody id="incomeBody"></tbody></table>
+            <div class="total-display-row" style="color: var(--gold);">
+                <span>PASSIVE INCOME:</span><span id="passiveDisp">$0</span>
+            </div>
+        </div>
+
+        <div class="quadrant" id="expenseQuad">
+            <h1>Expenses</h1>
+            <div class="row" style="justify-content: flex-start; gap: 15px; flex-wrap: wrap;">
+                <label>Children (0–3):</label>
+                <select id="numChildren" onchange="pushState(); updateChildrenLog(); debouncedCalc()">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+                <label>Monthly Cost per Child:</label>
+                <input type="number" id="perChildCost" value="0" min="0" onchange="pushState(); updateChildrenLog(); debouncedCalc()">
+            </div>
+            <div class="add-zone" id="expAdd">
+                <input type="text" id="exName" placeholder="Expense">
+                <input type="number" id="exAmt" placeholder="Mo. Cost" min="0">
+                <input type="number" id="exLiab" placeholder="Total Debt" min="0">
+                <button class="action-btn" onclick="addExpense()">+ Add</button>
+            </div>
+            <div class="add-zone" style="margin-top:10px; background:#2a2a2a;">
+                <input type="text" id="doodadName" placeholder="Doodad (e.g. New Car)" style="flex:1;">
+                <input type="number" id="doodadAmt" placeholder="Cost" min="0" style="width:100px;">
+                <button class="action-btn" onclick="addDoodad()" style="background:var(--red);">− Deduct</button>
+            </div>
+            <table class="ledger"><tbody id="expenseBody"></tbody></table>
+            <div class="row child-row" id="childExpRow" style="display:none;">
+                Child Expenses: <span id="childExpDisp">$0</span>
+            </div>
+            <div class="row" id="bankIntRow" style="color: var(--green); border:none;">
+                Bank Loan Interest (10%): <span id="bankInterestDisp">$0</span>
+            </div>
+            <div class="total-display-row" id="expTotalRow" style="color: var(--red);">
+                <span>TOTAL EXPENSES:</span><span id="expTotal">$0</span>
+            </div>
+        </div>
+
+        <div class="quadrant">
+            <h1>Assets (things that pay you)</h1>
+            <div id="stockHeader" style="font-size:0.9em; color:var(--cyan); font-weight:bold; margin:12px 0 6px;">Stocks / Funds</div>
+            <div class="add-zone" id="stockAdd">
+                <input type="text" id="sName" placeholder="Name">
+                <input type="number" id="sQty" placeholder="Shares" min="0">
+                <input type="number" id="sCost" placeholder="Price/share" min="0">
+                <input type="number" id="sDiv" placeholder="Div/Int per share" min="0">
+                <button class="action-btn" onclick="addStock()">Buy</button>
+            </div>
+            <table class="ledger"><tbody id="stockBody"></tbody></table>
+
+            <div style="font-size:0.9em; color:var(--gold); font-weight:bold; margin:12px 0 6px;">Real Estate</div>
+            <div class="add-zone" id="reAdd">
+                <input type="text" id="reName" placeholder="Property name">
+                <input type="number" id="reFlow" placeholder="Monthly CF" min="0">
+                <input type="number" id="reDown" placeholder="Down payment" min="0">
+                <input type="number" id="reCost" placeholder="Total cost" min="0">
+                <button class="action-btn" onclick="addAsset('re')">Buy</button>
+            </div>
+            <table class="ledger"><tbody id="reBody"></tbody></table>
+
+            <div style="font-size:0.9em; color:var(--purple); font-weight:bold; margin:12px 0 6px;">Business</div>
+            <div class="add-zone" id="bizAdd">
+                <input type="text" id="bizName" placeholder="Business name">
+                <input type="number" id="bizFlow" placeholder="Monthly CF" min="0">
+                <input type="number" id="bizDown" placeholder="Down payment" min="0">
+                <input type="number" id="bizCost" placeholder="Total cost" min="0">
+                <button class="action-btn" onclick="addAsset('biz')">Buy</button>
+            </div>
+            <table class="ledger"><tbody id="bizBody"></tbody></table>
+        </div>
+
+        <div class="quadrant" id="liabQuad">
+            <h1>Liabilities (debts)</h1>
+            <div class="add-zone" id="loanAdd">
+                <input type="number" id="loanReq" step="1000" placeholder="Loan amount" min="1000">
+                <button class="action-btn" onclick="takeBankLoan()">Borrow</button>
+            </div>
+            <table class="ledger"><thead><tr><th style="text-align:left;">Item</th><th>Balance</th><th></th></tr></thead><tbody id="liabBody"></tbody></table>
+        </div>
+    </div>
+
+    <div class="history-container" id="historyContainer">
+		<div style="font-size: 0.8em; text-transform: uppercase; color: var(--purple); margin-bottom: 8px;">Game Log / Audit Trail</div>
+		<div class="history-list" id="historyLog"></div>
+	</div>
+
+		<button class="btn-save" style="margin-top:20px; background:#444; color:#ff9800;" onclick="debugLoadInfo()">🛠️ Debug: Show Load Status</button>
+	</div>
+	
+<div class="sheet" id="fastTrackSheet" style="display: none;">
+    <h1 class="ft-title" style="font-size: 2.4em; margin: 15px 0 25px;">FAST TRACK</h1>
+
+    <div class="header" style="background: rgba(13, 31, 58, 0.6); border-bottom: 4px solid var(--ft-blue);">
+       <div class="stat-box">
+		<span class="stat-label">CASH</span>
+		<div class="cash-edit-wrapper">
+			<input type="text" id="ftCashDisp" class="stat-value" 
+				   value="$0" readonly 
+				   style="text-align: right; flex: 1; min-width: 140px;">
+			<button id="editFtCashBtn" class="action-btn edit-btn">
+				✏️ Edit
+			</button>
+		</div>
+	</div>
+        <div class="stat-box">
+            <span class="stat-label">CASH FLOW DAY</span>
+            <div class="stat-value" id="ftFlowDisp">$0</div>
+        </div>
+    </div>
+	
+	<div class="action-bar">
+		<button class="btn-payday ft-payday-btn" id="ftPaydayBtn" onclick="doPayday()">➔ COLLECT CASH FLOW DAY</button>
+	</div>
+	
+	<!-- Congrats & Goals Section -->
+	<div style="background: rgba(13, 31, 58, 0.7); border: 2px solid var(--ft-gold); border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);">
+		<h2 style="color: var(--ft-gold); font-size: 2em; margin: 0 0 15px; text-shadow: 0 0 10px var(--ft-orange);">CONGRATULATIONS!</h2>
+		<p style="color: var(--ft-text); font-size: 1.3em; margin: 0 0 10px;">You are out of the Rat Race!</p>
+		
+		<div style="display: flex; justify-content: space-around; margin: 20px 0;">
+			<div>
+				<strong style="color: var(--ft-blue);">Player:</strong><br>
+				<span id="ftPlayerName" style="color: var(--ft-gold); font-size: 1.4em;"></span>
+			</div>
+			<div>
+				<strong style="color: var(--ft-blue);">Auditor:</strong><br>
+				<span id="ftAuditorName" style="color: var(--ft-gold); font-size: 1.4em;"></span>
+			</div>
+		</div>
+
+		<h3 style="color: var(--ft-orange); margin: 20px 0 10px;">Your Goals</h3>
+		<p style="color: var(--ft-text);">
+			1) Buy your "Dream" – your personal ultimate goal.<br>
+			2) Or grow your Monthly Cashflow to $50,000+ from investments.
+		</p>
+
+		<div style="background: rgba(0, 212, 255, 0.1); border: 1px solid var(--ft-blue); border-radius: 8px; padding: 15px; margin: 20px 0;">
+			<strong style="color: var(--ft-gold);">You Win CASHFLOW if:</strong><br>
+			A) You buy your Dream<br>
+			- OR -<br>
+			B) You reach $50,000+ Monthly Cashflow from investments
+		</div>
+
+	<!-- Dream Display -->
+		<div style="background: rgba(255, 215, 0, 0.12); border: 2px solid var(--ft-gold); border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center; box-shadow: 0 0 20px rgba(255,215,0,0.25);">
+			<h3 style="color: var(--ft-gold); margin: 0 0 15px;">YOUR ULTIMATE DREAM</h3>
+			<div id="ftDreamDisplay" style="font-size: 1.4em; color: var(--ft-text); margin: 10px 0;">
+				<strong id="ftDreamNameDisp">-</strong><br>
+				Cost: <strong id="ftDreamCostDisp">-</strong>
+			</div>
+			<button id="buyDreamBtn" class="action-btn" onclick="buyFtDream()" style="background: var(--ft-gold); color: #000; padding: 12px 30px; font-size: 1.1em; margin-top: 15px; display: none;">
+				BUY YOUR DREAM NOW
+			</button>
+		</div>
+		
+	<!-- Income Record Table (placeholder) -->
+	<div style="background: rgba(13, 31, 58, 0.7); border: 2px solid var(--ft-gold); border-radius: 12px; padding: 20px; margin: 20px 0;">
+		<h3 style="color: var(--ft-gold); text-align: center; margin: 0 0 15px;">Your CASHFLOW Day Income Record</h3>
+		<table style="width:100%; border-collapse: collapse; color: var(--ft-text);">
+			<tr style="background: rgba(0, 212, 255, 0.15);">
+				<th style="padding:10px; border:1px solid var(--ft-blue);">Beginning CASHFLOW Day</th>
+				<th style="padding:10px; border:1px solid var(--ft-blue);">Monthly Cashflow</th>
+				<th style="padding:10px; border:1px solid var(--ft-blue);">New CASHFLOW Day Income</th>
+			</tr>
+			<tr>
+				<td id="ftBeginCF" style="padding:10px; border:1px solid var(--ft-blue); text-align:center;">$0</td>
+				<td id="ftMonthlyCF" style="padding:10px; border:1px solid var(--ft-blue); text-align:center;">$0</td>
+				<td id="ftNewCF" style="padding:10px; border:1px solid var(--ft-blue); text-align:center;">$0</td>
+			</tr>
+		</table>
+		<p style="text-align:center; margin-top:15px; color: var(--ft-text); font-size:0.9em;">(Business income added here when purchased on Fast Track)</p>
+	</div>
+
+	<div style="background: rgba(13, 31, 58, 0.7); border: 2px solid var(--ft-gold); border-radius: 12px; padding: 20px; margin: 20px 0;">
+		<h3 style="color: var(--ft-gold); text-align: center; margin: 0 0 15px;">Buy a Fast Track Business</h3>
+		<div class="add-zone" style="background: rgba(0, 212, 255, 0.1); border: 1px solid var(--ft-blue);">
+			<input type="text" id="ftBizName" placeholder="Business Name" style="flex:1; min-width: 150px;">
+			<input type="number" id="ftBizFlow" placeholder="Monthly CF" min="0" style="width:120px;">
+			<input type="number" id="ftBizCost" placeholder="Cost (cash)" min="0" style="width:120px;">
+			<button class="action-btn" onclick="buyFtBusiness()" style="background: var(--ft-orange); color: #000; min-width: 80px;">Buy</button>
+		</div>
+	</div>
+	
+    <!-- Purchased Fast Track Businesses Table -->
+	<div style="margin: 30px 0; background: rgba(13, 31, 58, 0.7); border: 2px solid var(--ft-blue); border-radius: 12px; padding: 20px; box-shadow: 0 0 15px rgba(0,212,255,0.25);">
+		<h3 style="color: var(--ft-gold); text-align: center; margin: 0 0 15px;">Purchased Fast Track Businesses</h3>
+		
+		<div id="ftPurchasedSummary" style="display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: bold; color: var(--ft-text); padding: 8px 12px; background: rgba(0,212,255,0.08); border-radius: 8px;">
+			<span>Total Businesses: <strong id="ftBizCount" style="color: var(--purple);">0</strong></span>
+			<span>Total Monthly CF Added: <strong id="ftBizTotalFlow" style="color: var(--green);">$0</strong></span>
+		</div>
+		
+		<table id="ftPurchasedTable" style="width:100%; border-collapse: collapse; color: var(--ft-text); font-size: 0.95em;">
+			<thead>
+				<tr style="background: rgba(0,212,255,0.15); color: var(--ft-blue);">
+					<th style="padding:10px; border:1px solid var(--ft-blue); text-align:left; color: var(--purple);">Business</th>
+					<th style="padding:10px; border:1px solid var(--ft-blue); color: var(--red);">Cost Paid</th>
+					<th style="padding:10px; border:1px solid var(--ft-blue); color: var(--green);">Monthly CF Added</th>
+					<th style="padding:10px; border:1px solid var(--ft-blue); text-align:center; width:80px;">Action</th>
+				</tr>
+			</thead>
+			<tbody id="ftPurchasedTableBody"></tbody>
+		</table>
+	</div>
+	
+	<!-- Fast Track Stocks Section -->
+<div style="background: rgba(13, 31, 58, 0.7); border: 2px solid var(--ft-gold); border-radius: 12px; padding: 20px; margin: 20px 0;">
+    <h3 style="color: var(--ft-gold); text-align: center; margin: 0 0 15px;">Buy Fast Track Stocks / Funds</h3>
+    <div class="add-zone" style="background: rgba(0, 212, 255, 0.12); border: 1px solid var(--ft-blue);">
+        <input type="text" id="ftStockName" placeholder="Name (e.g. Mutual Fund)" style="flex:1; min-width: 160px;">
+        <input type="number" id="ftStockShares" placeholder="Shares" min="1" style="width:100px;">
+        <input type="number" id="ftStockPrice" placeholder="Price/share" min="0" style="width:110px;">
+        <input type="number" id="ftStockDiv" placeholder="Div/Int per share" min="0" style="width:110px;">
+        <button class="action-btn" onclick="buyFtStock()" style="background: var(--ft-blue); color: #000; min-width: 80px;">Buy</button>
+    </div>
+</div>
+
+	<!-- Purchased Fast Track Stocks Table -->
+	<div style="margin: 30px 0; background: rgba(13, 31, 58, 0.7); border: 2px solid var(--ft-blue); border-radius: 12px; padding: 20px; box-shadow: 0 0 15px rgba(0,212,255,0.25);">
+		<h3 style="color: var(--ft-gold); text-align: center; margin: 0 0 15px;">Purchased Fast Track Stocks</h3>
+		<<div id="ftStocksSummary" style="display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: bold; color: var(--ft-blue); padding: 10px 14px; background: rgba(0, 212, 255, 0.12); border-radius: 8px; border: 1px solid rgba(0, 212, 255, 0.3);">
+			<span>Total Holdings: <strong id="ftStockCount" style="color: var(--ft-blue);">0</strong></span>
+			<span>Total Monthly Income Added: <strong id="ftStockTotalFlow" style="color: var(--green);">$0</strong></span>
+		</div>
+		<table id="ftStocksTable" style="width:100%; border-collapse: collapse; color: var(--ft-text); font-size: 0.95em;">
+			<thead>
+			<tr style="background: rgba(0, 212, 255, 0.18); color: var(--ft-blue);">
+				<th style="padding:10px; border:1px solid var(--ft-blue); text-align:left; font-weight: bold; color: var(--ft-blue);">Stock / Fund</th>
+				<th style="padding:10px; border:1px solid var(--ft-blue); text-align:right; font-weight: bold; color: var(--ft-blue);">Shares</th>
+				<th style="padding:10px; border:1px solid var(--ft-blue); text-align:right; color: var(--red);">Price Paid</th>
+				<th style="padding:10px; border:1px solid var(--ft-blue); text-align:right; color: var(--green);">Monthly Income</th>
+				<th style="padding:10px; border:1px solid var(--ft-blue); text-align:center; width:80px; color: var(--ft-blue);">Action</th>
+			</tr>
+			</thead>
+			<tbody id="ftStocksTableBody"></tbody>
+		</table>
+	</div>
+
+	<!-- Add below the Buy Business section -->
+	<div style="background: rgba(13, 31, 58, 0.7); border: 2px solid var(--ft-gold); border-radius: 12px; padding: 20px; margin: 20px 0;">
+		<h3 style="color: var(--ft-gold); text-align: center; margin: 0 0 15px;">Opportunities & Events</h3>
+		<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">
+			<button class="action-btn" style="background:#444; min-width:140px;" onclick="handleOpportunity('charity')">Charity (optional)</button>
+			<button class="action-btn" style="background:#cf6679; min-width:140px;" onclick="handleOpportunity('taxaudit')">Tax Audit</button>
+			<button class="action-btn" style="background:#ff1744; min-width:140px;" onclick="handleOpportunity('divorce')">Divorce</button>
+			<button class="action-btn" style="background:#d500f9; min-width:140px;" onclick="handleOpportunity('lawsuit')">Lawsuit</button>
+		</div>
+	</div>
+	
+	<div class="history-container" id="ftHistoryContainer" style="margin-top: 30px; background: #000; padding: 15px; border-radius: 8px; border: 1px solid var(--ft-blue); box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); min-height: 300px; overflow-y: auto; height: 300px;">
+		<div style="font-size: 0.8em; text-transform: uppercase; color: var(--ft-blue); margin-bottom: 8px;">Fast Track Game Log / Audit Trail</div>
+		<div class="history-list" id="ftHistoryLog"></div>
+	</div>
+	
+	    <!-- Return to Rat Race button -->
+    <button id="flipBackBtn" onclick="returnToRatRace()" style="margin: 40px auto; display: block;">
+		← Return to Rat Race (Review / Undo Escape)
+	</button>
+	
+	<!-- Victory Overlay -->
+		<div id="victoryOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:20000; align-items:center; justify-content:center; flex-direction:column; color:white; font-family:'Segoe UI',sans-serif;">
+			<h1 id="victoryText" style="font-size:8vw; font-weight:bold; margin:0; text-align:center; background:linear-gradient(135deg, var(--ft-blue), var(--ft-orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-shadow:0 0 30px rgba(255,149,0,0.6); animation: swell 2s ease-in-out infinite alternate;">
+				YOU WIN CASHFLOW!
+			</h1>
+			<p id="victorySubText" style="font-size:3vw; margin:20px 0; color:var(--ft-gold); text-shadow:0 0 15px rgba(255,215,0,0.7);">
+				<!-- Dynamic message inserted here -->
+			</p>
+			<button onclick="document.getElementById('victoryOverlay').style.display='none';" style="margin-top:40px; background:linear-gradient(135deg, var(--ft-blue), var(--ft-orange)); color:#000; padding:20px 50px; font-size:2vw; font-weight:bold; border:none; border-radius:12px; cursor:pointer; box-shadow:0 0 30px rgba(0,212,255,0.6);">
+				Awesome – Close
+			</button>
+		</div>
+
+		<style>
+			@keyframes swell {
+				0% { transform: scale(1); }
+				100% { transform: scale(1.08); }
+			}
+		</style>
+	
+<script>
+    const CURRENT_KEY = 'cf_auditor_v12_30';
+    const PREVIOUS_KEYS = ['cf_auditor_v12_29', 'cf_auditor_v12_28'];
+
+    function getDefaultState() {
+        return {
+            isFastTrack: false,
+            cash: 2000,
+            sal: 3000,  // Fixed: salary preloaded on reset
+            stocks: [],
+            re: [],
+            biz: [],
+            expenses: [],
+            bankLoan: 0,
+            history: [],
+            player: '',
+            profession: '',
+            auditor: '',
+            ftFlow: 0,
+            numChildren: 0,
+            perChildCost: 0,
+			ftBusinesses: [],  // [{ name: string, flow: number }]
+			dream: null,
+			ftAddedFlow: 0,
+			ftStocks: [],
+        };
+    }
+
+    let state = getDefaultState();
+    let isProgrammaticUpdate = false;
+    let undoStack = [];
+    let calcTimeout = null;
+
+    function debouncedCalc() {
+        if (calcTimeout) clearTimeout(calcTimeout);
+        calcTimeout = setTimeout(calc, 400);
+    }
+
+    function pushState() {
+		console.log('Pushing state — stack size before:', undoStack.length);
+		undoStack.push(JSON.stringify(state));
+		if (undoStack.length > 30) undoStack.shift();
+		console.log('Stack size after:', undoStack.length);
+	}
+
+    function syncIdentityToState() {
+        state.player   = document.getElementById('pName').value.trim();
+        state.auditor  = document.getElementById('aNameField').value.trim();
+    }
+
+    function undo() {
+		if (undoStack.length === 0) {
+			alert("Nothing to undo yet.");
+			return;
+		}
+
+		const currentPlayer   = document.getElementById('pName').value.trim();
+		const currentAuditor  = document.getElementById('aNameField').value.trim();
+		const currentProf     = state.profession;
+
+		state = JSON.parse(undoStack.pop());
+
+		state.stocks    = Array.isArray(state.stocks) ? state.stocks : [];
+		state.re        = Array.isArray(state.re) ? state.re : [];
+		state.biz       = Array.isArray(state.biz) ? state.biz : [];
+		state.expenses  = Array.isArray(state.expenses) ? state.expenses : [];
+
+		state.player     = currentPlayer   || state.player     || '';
+		state.profession = currentProf     || state.profession || '';
+
+		isProgrammaticUpdate = true;
+		document.getElementById('pName').value       = state.player;
+		document.getElementById('aNameField').value  = currentAuditor || state.auditor || '';
+		document.getElementById('sal').value         = state.sal || 3000;
+		isProgrammaticUpdate = false;
+
+		initUI();
+
+		// Force cash display sync after initUI restores state
+		updateCashDisplay();
+
+		log("Undo applied — names preserved", 0);
+	}
+
+    function log(msg, delta = 0) {
+		const entry = { 
+			time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
+			msg, 
+			delta 
+		};
+		state.history.push(entry);
+
+		// Render to the correct log based on current mode
+		if (state.isFastTrack) {
+			renderHistory('ftHistoryLog');
+		} else {
+			renderHistory('historyLog');
+		}
+	}
+
+    function renderHistory(targetId = 'historyLog') {
+		const el = document.getElementById(targetId);
+		if (!el) {
+			console.warn(`Log element not found: ${targetId}`);
+			return;
+		}
+
+		console.log(`Rendering log to ${targetId} with ${state.history.length} entries`);
+
+		const html = state.history.slice().reverse().map(h => {
+			let color = h.delta > 0 ? 'var(--green)' : (h.delta < 0 ? 'var(--red)' : '#888');
+			let sign = h.delta > 0 ? '+' : (h.delta < 0 ? '-' : '');
+			let valStr = h.delta !== 0 ? `<span style="color:${color};font-weight:bold;"> ${sign}$${Math.abs(h.delta).toLocaleString()}</span>` : '';
+			return `<div style="border-bottom:1px solid #222;padding:5px 0;font-size:0.9em;display:flex;justify-content:space-between;">
+				<span>[${h.time}] ${h.msg}</span>${valStr}
+			</div>`;
+		}).join('');
+
+		el.innerHTML = html;
+
+		// Force visibility and scroll to bottom (newest)
+		el.style.display = 'block';
+		el.scrollTop = 0;  // scroll to top so newest (now at top) is visible
+
+		// Add class if entries exist (for debug highlighting)
+		if (state.history.length > 0) {
+			el.classList.add('has-entries');
+		} else {
+			el.classList.remove('has-entries');
+		}
+
+		// Debug: log last entry
+		if (state.history.length > 0) {
+			console.log('Latest log entry:', state.history[state.history.length - 1]);
+		}
+	}
+
+    function roll(num) {
+		let total = 0;
+		for(let i = 0; i < num; i++) {
+			total += Math.floor(Math.random() * 6) + 1;
+		}
+		document.getElementById('diceRes').innerText = total;
+		log(`Rolled ${num} dice → ${total}`, 0);
+	}
+
+    function launchConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const colors = ['#03dac6', '#cfbc41', '#bb86fc', '#03a9f4'];
+        const particles = [];
+        for (let i = 0; i < 150; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                size: Math.random() * 8 + 4,
+                speedY: Math.random() * 5 + 2,
+                speedX: Math.random() * 4 - 2,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                rotation: Math.random() * 360,
+                rotSpeed: Math.random() * 10 - 5
+            });
+        }
+		
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.y += p.speedY;
+                p.x += p.speedX;
+                p.rotation += p.rotSpeed;
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                ctx.restore();
+            });
+            if (particles.some(p => p.y < canvas.height + 50)) requestAnimationFrame(animate);
+            else ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        animate();
+    }
+
+	function showVictory(message) {
+		const overlay = document.getElementById('victoryOverlay');
+		const subText = document.getElementById('victorySubText');
+		
+		if (subText) {
+			subText.innerText = message;
+		}
+		
+		if (overlay) {
+			overlay.style.display = 'flex';
+			// Extra confetti burst for drama
+			launchConfetti();
+			setTimeout(launchConfetti, 600);
+		}
+	}
+
+    function enterFastTrack() {
+		// Create a custom confirmation dialog with inputs
+		const dialog = document.createElement('div');
+		dialog.style.position = 'fixed';
+		dialog.style.top = '50%';
+		dialog.style.left = '50%';
+		dialog.style.transform = 'translate(-50%, -50%)';
+		dialog.style.background = 'var(--card)';
+		dialog.style.padding = '30px';
+		dialog.style.borderRadius = '12px';
+		dialog.style.border = '3px solid var(--gold)';
+		dialog.style.boxShadow = '0 0 30px rgba(207,188,65,0.5)';
+		dialog.style.zIndex = '10001';
+		dialog.style.maxWidth = '500px';
+		dialog.style.textAlign = 'center';
+		dialog.style.color = 'var(--text)';
+
+		dialog.innerHTML = `
+			<h2 style="color: var(--gold); margin-bottom: 20px;">ESCAPE THE RAT RACE?</h2>
+			<p style="margin-bottom: 25px;">Your passive income becomes Cash Flow Day (×100).<br>Now choose your ultimate Dream — this is your win condition!</p>
+			
+			<label style="display:block; margin:15px 0 5px; color:var(--ft-gold);">Your Dream (e.g. Private Island, World Cruise):</label>
+			<input type="text" id="escapeDreamName" placeholder="Enter your dream..." style="width:100%; padding:10px; font-size:1.1em; margin-bottom:15px;">
+			
+			<label style="display:block; margin:15px 0 5px; color:var(--ft-gold);">Cost of the Dream (cash):</label>
+			<input type="number" id="escapeDreamCost" placeholder="e.g. 5000000" min="0" style="width:100%; padding:10px; font-size:1.1em; text-align:right;">
+			
+			<div style="margin-top:30px;">
+				<button onclick="this.parentNode.parentNode.remove(); return false;" style="background:#444; color:#ff9800; padding:12px 24px; border:none; border-radius:8px; margin-right:15px; cursor:pointer;">Cancel</button>
+				<button id="confirmEscapeBtn" style="background:var(--green); color:#000; padding:12px 30px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Confirm & Escape →</button>
+			</div>
+		`;
+
+		document.body.appendChild(dialog);
+
+		document.getElementById('confirmEscapeBtn').onclick = () => {
+			const dreamName = document.getElementById('escapeDreamName').value.trim();
+			const dreamCost = parseFloat(document.getElementById('escapeDreamCost').value) || 0;
+
+			if (!dreamName) {
+				alert("Please enter your Dream!");
+				return;
+			}
+			if (dreamCost <= 0) {
+				alert("Please enter a positive cost for your Dream!");
+				return;
+			}
+
+			// Save to state
+			state.dream = { name: dreamName, cost: dreamCost };
+
+			dialog.remove();
+
+			// Proceed with escape
+			syncIdentityToState();
+			// Do NOT pushState() here — escape itself is not undoable
+			state.isFastTrack = true;
+
+			let passive = 0;
+			state.stocks.forEach(s => passive += (s.qty * s.div));
+			state.re.forEach(a => passive += a.flow);
+			state.biz.forEach(a => passive += a.flow);
+
+			state.ftFlow = passive * 100;
+			state.cash = state.ftFlow;
+			state.ftAddedFlow = 0;
+
+			document.getElementById('ftPlayerName').innerText = state.player || 'Player';
+			document.getElementById('ftAuditorName').innerText = state.auditor || 'Auditor';
+			document.getElementById('ftBeginCF').innerText = formatCurrency(state.ftFlow);
+			document.getElementById('ftMonthlyCF').innerText = formatCurrency(state.ftFlow);
+			document.getElementById('ftNewCF').innerText = formatCurrency(0);
+
+			log("Escaped the Rat Race! Fast Track Cash Flow Day set.", state.ftFlow);
+			launchConfetti();
+
+			document.getElementById('mainSheet').style.display = 'none';
+			document.getElementById('fastTrackSheet').style.display = 'block';
+
+			// Force FT history container visible immediately
+			const ftContainer = document.getElementById('ftHistoryContainer');
+			if (ftContainer) {
+				ftContainer.style.display = 'block';
+				ftContainer.style.visibility = 'visible';
+				ftContainer.style.opacity = '1';
+			}
+
+			renderFtPurchasedTable();
+			renderFtStocksTable();
+
+			// Render history multiple times for reliability
+			renderHistory('ftHistoryLog');
+			document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
+			document.getElementById('ftFlowDisp').innerText = formatCurrency(state.ftFlow);
+			
+			setTimeout(() => {
+				renderHistory('ftHistoryLog');  // Extra render after DOM settle
+				// Extra visibility force
+				if (ftContainer) {
+					ftContainer.style.display = 'block';
+					ftContainer.style.visibility = 'visible';
+					ftContainer.style.opacity = '1';
+				}
+			}, 300);
+
+			// Show the Dream in Fast Track UI
+			updateDreamDisplay();
+			updateFtIncomeTable();
+
+			alert(`Welcome to the Fast Track!\nYour Cash Flow Day is $${state.ftFlow.toLocaleString()}\nYour Dream: "${state.dream.name}" – $${state.dream.cost.toLocaleString()}`);
+			updateDreamDisplay();
+			restoreFastTrackDisplay();
+			initUI();
+			save(false);  // Ensure escape state (including names) is saved immediately
+		};
+	}
+	
+	function returnToRatRace() {
+		if (confirm("Switch back to Rat Race view?\nAll Fast Track progress (businesses, dream, cash flow, etc.) is preserved.")) {
+			document.getElementById('fastTrackSheet').style.display = 'none';
+			document.getElementById('mainSheet').style.display = 'block';
+			state.isFastTrack = false;
+			initUI();  // Re-sync badge, log, dice visibility, etc.
+			restoreFastTrackDisplay();
+			log("Returned to Rat Race view (Fast Track preserved)", 0);
+		}
+	}
+	
+	function restoreFastTrackDisplay() {
+		if (!state.isFastTrack) return;
+
+		// Cash
+		const ftCashEl = document.getElementById('ftCashDisp');
+		if (ftCashEl) ftCashEl.value = formatCurrency(state.cash);
+
+		// Cash Flow Day
+		const ftFlowEl = document.getElementById('ftFlowDisp');
+		if (ftFlowEl) ftFlowEl.innerText = formatCurrency(state.ftFlow);
+
+		// Income Record table
+		const beginEl = document.getElementById('ftBeginCF');
+		const monthlyEl = document.getElementById('ftMonthlyCF');
+		const newEl = document.getElementById('ftNewCF');
+
+		if (beginEl && monthlyEl && newEl) {
+			// Beginning = initial escape flow (you may need to save this separately if it changes)
+			const initialFlow = state.ftFlow - state.ftAddedFlow;  // or save it explicitly
+			beginEl.innerText = formatCurrency(initialFlow || state.ftFlow);
+			monthlyEl.innerText = formatCurrency(state.ftFlow);
+			newEl.innerText = formatCurrency(state.ftAddedFlow || 0);
+		}
+
+		// Player & Auditor names
+		const playerEl = document.getElementById('ftPlayerName');
+		const auditorEl = document.getElementById('ftAuditorName');
+		if (playerEl) playerEl.innerText = state.player || 'Player';
+		if (auditorEl) auditorEl.innerText = state.auditor || 'Auditor';
+
+		// Dream
+		updateDreamDisplay();
+
+		// Businesses table
+		renderFtPurchasedTable();
+		renderFtStocksTable();
+	}
+
+    function initUI() {
+		isProgrammaticUpdate = true;
+
+		try {
+			// Restore names from state
+			document.getElementById('pName').value = state.player || '';
+			document.getElementById('aNameField').value = state.auditor || '';  // ← add this
+
+			// Also update Fast Track display names
+			const ftPlayerEl = document.getElementById('ftPlayerName');
+			const ftAuditorEl = document.getElementById('ftAuditorName');
+			if (ftPlayerEl) ftPlayerEl.innerText = state.player || 'Player';
+			if (ftAuditorEl) ftAuditorEl.innerText = state.auditor || 'Auditor';
+			document.getElementById('sal').value = state.sal || 3000;
+			document.getElementById('cashValue').value = formatCurrency(state.cash || 2000);
+			document.getElementById('cashInput').value = state.cash || 2000;
+			
+			document.getElementById('numChildren').value = state.numChildren || 0;
+			document.getElementById('perChildCost').value = state.perChildCost || 0;
+
+			if (state.profession) {
+				document.getElementById('professionSelect').value = state.profession;
+			}
+
+			// Badge & 3-dice visibility
+			const badge = document.getElementById('ftBadge');
+			const dice3 = document.getElementById('dice3Btn');
+
+			if (state.isFastTrack) {
+				if (badge) badge.style.display = 'inline-block';
+				if (dice3) dice3.style.display = 'inline-block';  // always visible in FT for now
+				
+				document.getElementById('ftBadge').style.display = 'inline-block';
+				document.getElementById('salRow').style.display = 'none';
+				document.getElementById('expAdd').style.display = 'none';
+				document.getElementById('bankIntRow').style.display = 'none';
+				document.getElementById('expTotalRow').style.display = 'none';
+				document.getElementById('stockAdd').style.display = 'none';
+				document.getElementById('loanAdd').style.display = 'none';
+				document.getElementById('mainSheet').style.borderColor = 'var(--orange)';
+				
+				// Hide Rat Race log
+				document.getElementById('historyContainer').style.display = 'none';
+				
+				// Show FT log
+				const ftContainer = document.getElementById('ftHistoryContainer');
+				if (ftContainer) {
+					ftContainer.style.display = 'block';
+					ftContainer.style.visibility = 'visible';
+					ftContainer.style.opacity = '1';
+				}
+				
+				document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
+				renderHistory('ftHistoryLog');
+				renderFtPurchasedTable();
+				renderFtStocksTable();
+			} else {
+				if (badge) badge.style.display = 'none';
+				if (dice3) dice3.style.display = 'none';
+				
+				document.getElementById('ftBadge').style.display = 'none';
+				
+				// Show Rat Race log, hide FT
+				document.getElementById('historyContainer').style.display = 'block';
+				const ftContainer = document.getElementById('ftHistoryContainer');
+				if (ftContainer) ftContainer.style.display = 'none';
+				
+				renderHistory('historyLog');
+			}
+
+			renderHistory();  // fallback
+			calc();
+			
+			// Safety: ensure flow shows salary when no passive/expenses
+			if (!state.isFastTrack && parseInt(document.getElementById('flowDisp').innerText.replace(/[$,]/g, '')) === 0) {
+				document.getElementById('flowDisp').innerText = formatCurrency(state.sal || 3000);
+			}
+			
+			document.getElementById('editCashBtn').onclick = makeCashEditable;
+			
+			const ftEditBtn = document.getElementById('editFtCashBtn');
+			if (ftEditBtn) ftEditBtn.onclick = makeFtCashEditable;
+
+			if (state.isFastTrack) {
+				const ftCash = document.getElementById('ftCashDisp');
+				if (ftCash) ftCash.value = formatCurrency(state.cash);
+				updateDreamDisplay();
+			}
+
+		} catch (e) {
+			console.error("initUI error:", e);
+		} finally {
+			isProgrammaticUpdate = false;
+		}
+		restoreFastTrackDisplay();
+	}
+
+    function showProfessionCard(profData) {
+        document.getElementById('cardProfession').innerText = profData.profession;
+        document.getElementById('cardSummary').innerHTML = `
+            Salary: $${profData.sal.toLocaleString()}/mo<br>
+            Children: ${profData.numChildren} @ $${profData.perChildCost}/mo each<br><br>
+            Expenses & debts loaded automatically!<br>
+            Let's play!
+        `;
+        
+        const card = document.getElementById('professionCard');
+        const inner = document.querySelector('.card-inner');
+        
+        card.style.display = 'flex';
+        inner.classList.remove('flipped');
+        
+        setTimeout(() => {
+            inner.classList.add('flipped');
+            launchConfetti();
+        }, 800);
+    }
+
+    function closeCard() {
+        document.getElementById('professionCard').style.display = 'none';
+    }
+
+    function loadProfession(force = false) {
+        const prof = document.getElementById('professionSelect').value;
+		if (!prof && !force) return;
+
+        let data = {};
+        switch (prof) {
+            case 'Teacher':
+                data = {
+                    profession: 'Teacher (K-12)',
+                    sal: 3300,
+                    numChildren: 0,
+                    perChildCost: 180,
+                    expenses: [
+                        { name: 'Taxes', amt: 630, liab: 0 },
+                        { name: 'Mortgage/Rent', amt: 500, liab: 50000 },
+                        { name: 'School Loan', amt: 60, liab: 12000 },
+                        { name: 'Car Payment', amt: 100, liab: 5000 },
+                        { name: 'Credit Card Payment', amt: 90, liab: 3000 },
+                        { name: 'Retail Payment', amt: 50, liab: 1000 },
+                        { name: 'Other', amt: 760, liab: 0 }
+                    ],
+                    cashAdjustment: 400
+                };
+                break;
+            case 'Doctor':
+                data = {
+                    profession: 'Doctor',
+                    sal: 13200,
+                    numChildren: 0,
+                    perChildCost: 640,
+                    expenses: [
+                        { name: 'Taxes', amt: 3420, liab: 0 },
+                        { name: 'Mortgage/Rent', amt: 1900, liab: 202000 },
+                        { name: 'School Loan', amt: 750, liab: 150000 },
+                        { name: 'Car Payment', amt: 380, liab: 19000 },
+                        { name: 'Credit Card Payment', amt: 270, liab: 9000 },
+                        { name: 'Retail Payment', amt: 50, liab: 1000 },
+                        { name: 'Other', amt: 2880, liab: 0 }
+                    ],
+                    cashAdjustment: 400
+                };
+                break;
+            case 'Engineer':
+                data = {
+                    profession: 'Engineer',
+                    sal: 4900,
+                    numChildren: 0,
+                    perChildCost: 250,
+                    expenses: [
+                        { name: 'Taxes', amt: 1050, liab: 0 },
+                        { name: 'Mortgage/Rent', amt: 700, liab: 75000 },
+                        { name: 'School Loan', amt: 60, liab: 12000 },
+                        { name: 'Car Payment', amt: 140, liab: 7000 },
+                        { name: 'Credit Card Payment', amt: 120, liab: 4000 },
+                        { name: 'Retail Payment', amt: 50, liab: 1000 },
+                        { name: 'Other', amt: 1090, liab: 0 }
+                    ],
+                    cashAdjustment: 400
+                };
+                break;
+            case 'Lawyer':
+                data = {
+                    profession: 'Lawyer',
+                    sal: 7500,
+                    numChildren: 0,
+                    perChildCost: 380,
+                    expenses: [
+                        { name: 'Taxes', amt: 1830, liab: 0 },
+                        { name: 'Mortgage/Rent', amt: 1100, liab: 115000 },
+                        { name: 'School Loan', amt: 390, liab: 78000 },
+                        { name: 'Car Payment', amt: 220, liab: 11000 },
+                        { name: 'Credit Card Payment', amt: 180, liab: 6000 },
+                        { name: 'Retail Payment', amt: 50, liab: 1000 },
+                        { name: 'Other', amt: 1650, liab: 0 }
+                    ],
+                    cashAdjustment: 400
+                };
+                break;
+            case 'Secretary':
+                data = {
+                    profession: 'Secretary',
+                    sal: 2500,
+                    numChildren: 0,
+                    perChildCost: 140,
+                    expenses: [
+                        { name: 'Taxes', amt: 460, liab: 0 },
+                        { name: 'Mortgage/Rent', amt: 400, liab: 38000 },
+                        { name: 'School Loan', amt: 0, liab: 0 },
+                        { name: 'Car Payment', amt: 80, liab: 4000 },
+                        { name: 'Credit Card Payment', amt: 50, liab: 2000 },
+                        { name: 'Retail Payment', amt: 60, liab: 1000 },
+                        { name: 'Other', amt: 570, liab: 0 }
+                    ],
+                    cashAdjustment: 710
+                };
+                break;
+            case 'Truck Driver':
+                data = {
+                    profession: 'Truck Driver',
+                    sal: 2500,
+                    numChildren: 0,
+                    perChildCost: 140,
+                    expenses: [
+                        { name: 'Taxes', amt: 460, liab: 0 },
+                        { name: 'Mortgage/Rent', amt: 400, liab: 38000 },
+                        { name: 'School Loan', amt: 0, liab: 0 },
+                        { name: 'Car Payment', amt: 80, liab: 4000 },
+                        { name: 'Credit Card Payment', amt: 60, liab: 2000 },
+                        { name: 'Retail Payment', amt: 50, liab: 1000 },
+                        { name: 'Other', amt: 570, liab: 0 }
+                    ],
+                    cashAdjustment: 400
+                };
+                break;
+            case 'Airline Pilot':
+                data = {
+                    profession: 'Airline Pilot',
+                    sal: 9500,
+                    numChildren: 0,
+                    perChildCost: 480,
+                    expenses: [
+                        { name: 'Taxes', amt: 2350, liab: 0 },
+                        { name: 'Mortgage/Rent', amt: 1330, liab: 143000 },
+                        { name: 'School Loan', amt: 0, liab: 0 },
+                        { name: 'Car Payment', amt: 300, liab: 15000 },
+                        { name: 'Credit Card Payment', amt: 660, liab: 22000 },
+                        { name: 'Retail Payment', amt: 50, liab: 1000 },
+                        { name: 'Other', amt: 2210, liab: 0 }
+                    ],
+                    cashAdjustment: 400
+                };
+                break;
+            case 'Mechanic':
+                data = {
+                    profession: 'Mechanic',
+                    sal: 2000,
+                    numChildren: 0,
+                    perChildCost: 110,
+                    expenses: [
+                        { name: 'Taxes', amt: 360, liab: 0 },
+                        { name: 'Mortgage/Rent', amt: 300, liab: 31000 },
+                        { name: 'School Loan', amt: 0, liab: 0 },
+                        { name: 'Car Payment', amt: 60, liab: 3000 },
+                        { name: 'Credit Card Payment', amt: 60, liab: 2000 },
+                        { name: 'Retail Payment', amt: 50, liab: 1000 },
+                        { name: 'Other', amt: 450, liab: 0 }
+                    ],
+                    cashAdjustment: 670
+                };
+                break;
+            case 'Police Officer':
+                data = {
+                    profession: 'Police Officer',
+                    sal: 3000,
+                    numChildren: 0,
+                    perChildCost: 160,
+                    expenses: [
+                        { name: 'Taxes', amt: 580, liab: 0 },
+                        { name: 'Mortgage/Rent', amt: 400, liab: 46000 },
+                        { name: 'School Loan', amt: 0, liab: 0 },
+                        { name: 'Car Payment', amt: 100, liab: 5000 },
+                        { name: 'Credit Card Payment', amt: 60, liab: 2000 },
+                        { name: 'Retail Payment', amt: 50, liab: 1000 },
+                        { name: 'Other', amt: 690, liab: 0 }
+                    ],
+                    cashAdjustment: 520
+                };
+                break;
+            default:
+                return;
+        }
+
+                state.sal = data.sal;
+        state.numChildren = data.numChildren;
+        state.perChildCost = data.perChildCost;
+        state.expenses = data.expenses;
+        state.profession = data.profession;
+        state.cash = data.cashAdjustment || 2000;
+
+        // NEW: Sync cash to UI immediately after setting state
+        isProgrammaticUpdate = true;
+        document.getElementById('cashValue').value = formatCurrency(state.cash);
+        document.getElementById('cashInput').value = state.cash;
+        isProgrammaticUpdate = false;
+
+        log(`Started game as ${data.profession} — Salary $${data.sal.toLocaleString()}/mo, Cash $${state.cash.toLocaleString()}, ${data.expenses.length} expenses pre-loaded`, 0);
+
+        isProgrammaticUpdate = true;
+        document.getElementById('sal').value = state.sal;
+        document.getElementById('numChildren').value = state.numChildren;
+        document.getElementById('perChildCost').value = state.perChildCost;
+        isProgrammaticUpdate = false;
+
+        calc();
+        showProfessionCard(data);
+    }
+
+    function randomProfession() {
+        const select = document.getElementById('professionSelect');
+        const options = Array.from(select.options).filter(opt => opt.value !== "");
+        if (options.length === 0) return alert("No professions available!");
+
+        const randomIndex = Math.floor(Math.random() * options.length);
+        const randomProf = options[randomIndex].value;
+
+        select.value = randomProf;
+        loadProfession(true);   // force = true 
+    }
+
+    function doPayday() {
+		console.log("doPayday called — isFastTrack:", state.isFastTrack);
+		console.log("Current cash before:", state.cash);
+		console.log("Cash flow value being added:", state.isFastTrack ? state.ftFlow : "rat race flow");
+
+		syncIdentityToState();
+		pushState();
+
+		let val = state.isFastTrack ? state.ftFlow : parseInt(document.getElementById('flowDisp').innerText.replace(/[^0-9-]/g, '')) || 0;
+		
+		state.cash += val;
+		
+		log(state.isFastTrack ? "Collected Cash Flow Day" : "Collected Payday", val);
+		
+		updateCashDisplay();           // this MUST be called
+		
+		// Force FT display update if in fast track
+		if (state.isFastTrack) {
+			document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
+		}
+		
+		debouncedCalc();
+		
+		console.log("Cash after:", state.cash);
+	}
+
+    function addExpense() {
+        const name = document.getElementById('exName').value.trim() || "Expense";
+        const amt = parseFloat(document.getElementById('exAmt').value) || 0;
+        const liab = parseFloat(document.getElementById('exLiab').value) || 0;
+        if (amt <= 0) return alert("Enter a valid monthly cost.");
+        syncIdentityToState();
+        pushState();
+        state.expenses.push({ name, amt, liab });
+        log(`Added expense "${name}": $${amt.toLocaleString()}/mo (debt $${liab.toLocaleString()})`, 0);
+        document.getElementById('exName').value = '';
+        document.getElementById('exAmt').value = '';
+        document.getElementById('exLiab').value = '';
+        debouncedCalc();
+    }
+
+    function addDoodad() {
+        const name = document.getElementById('doodadName').value.trim() || "Doodad";
+        const amt = parseFloat(document.getElementById('doodadAmt').value) || 0;
+        if (amt <= 0) return alert("Enter a valid cost.");
+        if (state.cash < amt) return alert(`Not enough cash! Need $${amt.toLocaleString()}, you have $${state.cash.toLocaleString()}`);
+        
+        syncIdentityToState();
+        pushState();
+        state.cash -= amt;
+        log(`Doodad/One-time: "${name}" −$${amt.toLocaleString()}`, -amt);
+        
+        document.getElementById('doodadName').value = '';
+        document.getElementById('doodadAmt').value = '';
+        updateCashDisplay();
+        debouncedCalc();
+    }
+
+    function updateChildrenLog() {
+        const children = parseInt(document.getElementById('numChildren').value) || 0;
+        const perChild = parseFloat(document.getElementById('perChildCost').value) || 0;
+        const childTotal = children * perChild;
+        log(`Children expense updated to ${children} child(ren) @ $${perChild}/mo = $${childTotal.toLocaleString()}/mo`, 0);
+    }
+
+    function formatCurrency(num) {
+        return '$' + (num || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    }
+	
+	function updateCashDisplay() {
+		const cashEl = document.getElementById('cashValue');
+		const hiddenEl = document.getElementById('cashInput');
+		
+		if (cashEl && hiddenEl) {
+			const formatted = formatCurrency(state.cash);
+			cashEl.value = formatted;
+			hiddenEl.value = state.cash.toString();
+			console.log("Cash display set to:", formatted);  // helpful for testing
+		}
+	}
+
+	function makeCashEditable() {
+		const cashEl = document.getElementById('cashValue');
+		const editBtn = document.getElementById('editCashBtn');
+		
+		if (!cashEl || !editBtn) return;
+
+		cashEl.removeAttribute('readonly');
+		cashEl.focus();
+		cashEl.select();
+		
+		editBtn.textContent = '✅ Done';
+		editBtn.onclick = finishCashEdit;
+
+		cashEl.onkeydown = function(e) {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				finishCashEdit();
+			}
+		};
+	}
+
+	function finishCashEdit() {
+		const cashEl = document.getElementById('cashValue');
+		const editBtn = document.getElementById('editCashBtn');
+		
+		if (!cashEl || !editBtn) return;
+
+		let raw = cashEl.value.replace(/[^0-9-]/g, '');
+		let newCash = parseInt(raw) || 0;
+
+		if (newCash !== state.cash) {
+			syncIdentityToState();
+			pushState();
+			let delta = newCash - state.cash;
+			state.cash = newCash;
+			log(`Cash manually adjusted to ${formatCurrency(newCash)} (delta ${delta > 0 ? '+' : ''}$${Math.abs(delta).toLocaleString()})`, delta);
+		}
+
+		cashEl.setAttribute('readonly', 'readonly');
+		cashEl.value = formatCurrency(state.cash);
+		document.getElementById('cashInput').value = state.cash;
+
+		editBtn.textContent = '✏️ Edit';
+		editBtn.onclick = makeCashEditable;
+
+		debouncedCalc();
+	}
+
+	// Make FT cash editable
+	function makeFtCashEditable() {
+		const cashEl = document.getElementById('ftCashDisp');
+		const editBtn = document.getElementById('editFtCashBtn');
+		
+		if (!cashEl || !editBtn) return;
+
+		cashEl.removeAttribute('readonly');
+		cashEl.focus();
+		cashEl.select();
+		
+		editBtn.textContent = '✅ Done';
+		editBtn.classList.add('done-mode');
+		editBtn.onclick = finishFtCashEdit;
+
+		cashEl.onkeydown = function(e) {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				finishFtCashEdit();
+			}
+		};
+	}
+
+	function finishFtCashEdit() {
+		const cashEl = document.getElementById('ftCashDisp');
+		const editBtn = document.getElementById('editFtCashBtn');
+		
+		if (!cashEl || !editBtn) return;
+
+		let raw = cashEl.value.replace(/[^0-9-]/g, '');
+		let newCash = parseInt(raw) || 0;
+
+		if (newCash !== state.cash) {
+			pushState();
+			let delta = newCash - state.cash;
+			state.cash = newCash;
+			log(`Fast Track Cash manually adjusted to ${formatCurrency(newCash)} (delta ${delta > 0 ? '+' : ''}$${Math.abs(delta).toLocaleString()})`, delta);
+		}
+
+		cashEl.setAttribute('readonly', 'readonly');
+		cashEl.value = formatCurrency(state.cash);
+
+		editBtn.textContent = '✏️ Edit';
+		editBtn.classList.remove('done-mode');
+		editBtn.onclick = makeFtCashEditable;
+
+		// Optional: brief highlight
+		cashEl.style.transition = 'background 0.5s';
+		cashEl.style.background = 'rgba(255,215,0,0.2)';
+		setTimeout(() => cashEl.style.background = 'rgba(0, 0, 0, 0.4)', 800);
+	}
+	
+    function addStock() {
+        const name  = document.getElementById('sName').value.trim() || "Stock";
+        const qty   = parseInt(document.getElementById('sQty').value)   || 0;
+        const cost  = parseFloat(document.getElementById('sCost').value) || 0;
+        const div   = parseFloat(document.getElementById('sDiv').value)  || 0;
+
+        if (qty <= 0 || cost <= 0) {
+            alert("Please enter valid quantity and price per share.");
+            return;
+        }
+
+        const totalCost = qty * cost;
+
+        if (state.cash < totalCost) {
+            alert(`Not enough cash! Need $${totalCost.toLocaleString()}, you have $${state.cash.toLocaleString()}`);
+            return;
+        }
+
+        syncIdentityToState();
+        pushState();
+        const newPassiveFromThis = qty * div;
+        state.stocks.push({ name, qty, cost, div });
+        state.cash -= totalCost;
+
+        log(`Bought ${qty} shares of ${name} @ $${cost}/sh = $${totalCost.toLocaleString()}`, -totalCost);
+        if (newPassiveFromThis > 0) {
+            log(`Passive income increased by $${newPassiveFromThis.toLocaleString()}/mo from ${name} dividends`, 0);
+        }
+
+        document.getElementById('sName').value = '';
+        document.getElementById('sQty').value  = '';
+        document.getElementById('sCost').value  = '';
+        document.getElementById('sDiv').value   = '';
+		updateCashDisplay();
+        debouncedCalc();
+    }
+
+    function addAsset(type) {
+        let name, flow, down, cost, zoneId;
+
+        if (type === 're') {
+            zoneId = 'reAdd';
+            name  = document.getElementById('reName').value.trim() || "Property";
+            flow  = parseFloat(document.getElementById('reFlow').value) || 0;
+            down  = parseFloat(document.getElementById('reDown').value) || 0;
+            cost  = parseFloat(document.getElementById('reCost').value) || 0;
+        } else if (type === 'biz') {
+            zoneId = 'bizAdd';
+            name  = document.getElementById('bizName').value.trim() || "Business";
+            flow  = parseFloat(document.getElementById('bizFlow').value) || 0;
+            down  = parseFloat(document.getElementById('bizDown').value) || 0;
+            cost  = parseFloat(document.getElementById('bizCost').value) || 0;
+        } else return;
+
+        if (flow < 0 || down < 0 || cost <= 0) {
+            alert("Please check values — cost must be positive, flow/down >= 0.");
+            return;
+        }
+
+        if (down > state.cash) {
+            alert(`Not enough cash for down payment! Need $${down.toLocaleString()}, have $${state.cash.toLocaleString()}`);
+            return;
+        }
+
+        syncIdentityToState();
+        pushState();
+        const asset = { name, flow, down, cost, liab: cost - down };
+
+        if (type === 're') state.re.push(asset);
+        else               state.biz.push(asset);
+
+        state.cash -= down;
+
+        log(`Acquired ${type.toUpperCase()}: ${name}  (CF $${flow}/mo, down $${down.toLocaleString()}, total $${cost.toLocaleString()})`, -down);
+        if (flow > 0) {
+            log(`Passive income increased by $${flow.toLocaleString()}/mo from ${name}`, 0);
+        }
+
+        document.querySelectorAll(`#${zoneId} input`).forEach(inp => inp.value = '');
+        updateCashDisplay();
+        debouncedCalc();
+    }
+
+    function handleSalaryChange(el) {
+        if (isProgrammaticUpdate) return;
+
+        let newSal = parseInt(el.value) || 0;
+        
+        if (newSal !== state.sal) {
+            syncIdentityToState();
+            pushState();
+            let deltaFlow = newSal - state.sal;
+            state.sal = newSal;
+            log(`Salary updated to $${newSal.toLocaleString()}/mo (delta ${deltaFlow > 0 ? '+' : ''}$${Math.abs(deltaFlow).toLocaleString()}/mo impact on cash flow)`, 0);
+            
+            debouncedCalc();
+        }
+    }
+
+    function sellStock(index) {
+		const s = state.stocks[index];
+		if (!s) return alert("Invalid stock index.");
+
+		const sellQty = parseInt(prompt(`How many shares of ${s.name} to sell? (You own ${s.qty}, original cost $${s.cost}/sh)`)) || 0;
+		if (sellQty <= 0 || sellQty > s.qty) {
+			return alert(`Invalid quantity. Must sell between 1 and ${s.qty}.`);
+		}
+
+		const sellPrice = parseFloat(prompt(`Sell price per share for ${s.name} (original cost was $${s.cost}):`)) || 0;
+		if (sellPrice <= 0) return alert("Invalid sell price.");
+
+		syncIdentityToState();
+		pushState();
+
+		const proceeds = sellQty * sellPrice;
+		const costBasis = sellQty * s.cost;
+		const gainLoss = proceeds - costBasis;
+
+		const oldDiv = s.qty * s.div;
+		s.qty -= sellQty;
+		const newDiv = s.qty * s.div;
+		const divDelta = newDiv - oldDiv;
+
+		state.cash += proceeds;
+
+		// ADD THESE TWO LINES HERE
+		updateCashDisplay();
+
+		if (s.qty <= 0) {
+			state.stocks.splice(index, 1);
+		}
+
+		const glStr = gainLoss >= 0 ? `gain +$${gainLoss.toLocaleString()}` : `loss -$${Math.abs(gainLoss).toLocaleString()}`;
+		log(`Sold ${sellQty} of ${s.qty + sellQty} shares of ${s.name} @ $${sellPrice}/sh = $${proceeds.toLocaleString()} (${glStr})`, proceeds);
+
+		if (s.div > 0 && divDelta !== 0) {
+			const direction = divDelta > 0 ? 'increased' : 'decreased';
+			const absDelta = Math.abs(divDelta).toLocaleString();
+			log(`Passive income ${direction} by $${absDelta}/mo from ${s.name} dividends (new monthly: $${newDiv.toLocaleString()}/mo)`, 0);
+		}
+
+		debouncedCalc();
+	}
+
+    function sellAsset(type, index) {
+		let asset, array;
+		if (type === 're') {
+			asset = state.re[index];
+			array = state.re;
+		} else if (type === 'biz') {
+			asset = state.biz[index];
+			array = state.biz;
+		}
+		if (!asset) return alert("Invalid asset index.");
+
+		const sellPrice = parseFloat(prompt(`Enter sell price for ${asset.name} (total cost was $${asset.cost}):`)) || 0;
+		if (sellPrice <= 0) return alert("Invalid sell price.");
+
+		syncIdentityToState();
+		pushState();
+		let proceeds = sellPrice;
+		let glDelta = 0;
+
+		if (asset.liab > 0) {
+			proceeds -= asset.liab;
+			glDelta = proceeds - asset.down;
+		} else {
+			glDelta = proceeds - asset.cost;
+		}
+
+		state.cash += proceeds;
+
+		// ADD THESE TWO LINES HERE
+		updateCashDisplay();
+
+		array.splice(index, 1);
+
+		const glStr = glDelta >= 0 ? `gain +$${glDelta.toLocaleString()}` : `loss -$${Math.abs(glDelta).toLocaleString()}`;
+		const debtNote = asset.liab > 0 ? ` (paid off $${asset.liab.toLocaleString()} debt)` : '';
+		log(`Sold ${type.toUpperCase()}: ${asset.name} for $${sellPrice.toLocaleString()}${debtNote} = net $${proceeds.toLocaleString()} (${glStr})`, proceeds);
+
+		debouncedCalc();
+}
+
+    function takeBankLoan() {
+        const amount = parseFloat(document.getElementById('loanReq').value) || 0;
+        if (amount < 1000 || amount % 1000 !== 0) {
+            alert("Loan must be at least $1,000 and in multiples of $1,000.");
+            return;
+        }
+        if (confirm(`Borrow $${amount.toLocaleString()} from the bank?\n(10% annual interest = $${(amount * 0.10).toLocaleString()}/mo added to expenses)`)) {
+            syncIdentityToState();
+            pushState();
+            state.bankLoan += amount;
+            state.cash += amount;
+            log(`Added bank loan of $${amount.toLocaleString()} (10% interest = +$${(amount * 0.10).toLocaleString()}/mo expense, cash +$${amount.toLocaleString()})`, amount);
+            document.getElementById('loanReq').value = '';
+            updateCashDisplay();
+			debouncedCalc();
+        }
+    }
+
+    function payBankLoan() {
+		if (state.bankLoan <= 0) {
+			alert("No bank loan to pay off.");
+			return;
+		}
+
+		if (state.cash < state.bankLoan) {
+			alert(`Not enough cash to pay off the full bank loan of $${state.bankLoan.toLocaleString()} (you have $${state.cash.toLocaleString()}).`);
+			return;
+		}
+
+		if (confirm(`Pay off the entire bank loan of $${state.bankLoan.toLocaleString()}?`)) {
+			syncIdentityToState();
+			pushState();
+			const payoffAmount = state.bankLoan;
+			state.cash -= payoffAmount;
+
+			updateCashDisplay();
+			state.bankLoan = 0;
+			log(`Paid off bank loan of $${payoffAmount.toLocaleString()}`, -payoffAmount);
+			debouncedCalc();
+		}
+	}
+
+    function payExpenseDebt(index) {
+		const e = state.expenses[index];
+		if (!e || e.liab <= 0) {
+			return alert("No debt on this expense.");
+		}
+
+		const debtAmount = e.liab;
+
+		if (state.cash < debtAmount) {
+			alert(`Not enough cash to pay off $${debtAmount.toLocaleString()} debt (you have $${state.cash.toLocaleString()}).`);
+			return;
+		}
+
+		if (confirm(`Pay off $${debtAmount.toLocaleString()} debt from "${e.name}"?`)) {
+			syncIdentityToState();
+			pushState();
+			state.cash -= debtAmount;
+
+			updateCashDisplay();
+			state.expenses.splice(index, 1);
+			log(`Paid off and removed $${debtAmount.toLocaleString()} debt + monthly expense from "${e.name}"`, -debtAmount);
+			debouncedCalc();
+		}
+	}
+
+    function payOffMortgage(type, index) {
+		let array = type === 're' ? state.re : state.biz;
+		let asset = array[index];
+		if (!asset || asset.liab <= 0) return;
+
+		const debtAmount = asset.liab;
+
+		if (state.cash < debtAmount) {
+			alert(`Not enough cash! Need $${debtAmount.toLocaleString()}, have $${state.cash.toLocaleString()}`);
+			return;
+		}
+
+		if (confirm(`Pay off $${debtAmount.toLocaleString()} ${type === 're' ? 'mortgage' : 'debt'} on ${asset.name}?`)) {
+			syncIdentityToState();
+			pushState();
+
+			state.cash -= debtAmount;
+
+			// IMMEDIATE cash display update (this is the key fix)
+			updateCashDisplay();
+
+			log(`Paid off $${debtAmount.toLocaleString()} ${type === 're' ? 'mortgage' : 'debt'} on ${asset.name}`, -debtAmount);
+
+
+			const expenseIndex = state.expenses.findIndex(e => e.name.includes(asset.name) || e.name === 'Mortgage/Rent');
+			if (expenseIndex !== -1) {
+				state.expenses.splice(expenseIndex, 1);
+				log(`Removed associated monthly expense after payoff`, 0);
+			}
+
+			asset.liab = 0;
+			debouncedCalc();
+		}
+	}
+
+    function removeExpense(index) {
+		const e = state.expenses[index];
+		if (!e) return;
+
+		let confirmMsg = `Remove expense "${e.name}" (${formatCurrency(e.amt)}/mo)?`;
+		if (e.liab > 0) {
+			confirmMsg += `\n\nThis has $${e.liab.toLocaleString()} debt — pay it off now? (deducts from cash)`;
+		}
+
+		if (confirm(confirmMsg)) {
+			syncIdentityToState();
+			pushState();
+			console.log('Before payoff: cash =', state.cash);
+			state.cash -= e.liab;
+			console.log('After payoff: cash =', state.cash);
+
+			let totalDelta = -e.amt;  // monthly impact
+
+			// Handle debt payoff if any
+			if (e.liab > 0) {
+				if (state.cash < e.liab) {
+					alert(`Not enough cash to pay off $${e.liab.toLocaleString()} debt!\nYou have $${state.cash.toLocaleString()}`);
+					return;  // abort
+				}
+				state.cash -= e.liab;
+				totalDelta -= e.liab;  // include in log delta
+				log(`Paid off $${e.liab.toLocaleString()} debt on "${e.name}"`, -e.liab);
+			}
+
+			// Remove the expense
+			state.expenses.splice(index, 1);
+
+			// Log the removal with combined delta
+			log(`Removed expense "${e.name}" (${formatCurrency(e.amt)}/mo)`, totalDelta);
+
+			// Update cash display immediately
+			updateCashDisplay();
+
+			debouncedCalc();
+		}
+	}
+
+    function renderExpenses() {
+        const children = parseInt(document.getElementById('numChildren').value) || 0;
+        const perChild = parseFloat(document.getElementById('perChildCost').value) || 0;
+        const childTotal = children * perChild;
+
+        const bankInterest = Math.floor(state.bankLoan * 0.10);
+        let expTotal = bankInterest + childTotal;
+
+        document.getElementById('bankInterestDisp').innerText = formatCurrency(bankInterest);
+
+        let expHtml = "";
+
+        state.expenses.forEach((e, i) => {
+            expTotal += e.amt;
+            const hasDebt = parseFloat(e.liab) > 0;
+            const rowClass = hasDebt ? 'expense-with-debt' : '';
+            const debtDisplay = hasDebt ? ` (debt $${e.liab.toLocaleString()})` : '';
+
+            expHtml += `<tr class="${rowClass}">
+                <td>${e.name}${debtDisplay}</td>
+                <td>${formatCurrency(e.amt)}</td>
+                <td><button class="action-btn" onclick="removeExpense(${i})">❌</button></td>
+            </tr>`;
+        });
+
+        document.getElementById('expenseBody').innerHTML = expHtml;
+        document.getElementById('expTotal').innerText = formatCurrency(expTotal);
+        document.getElementById('childExpDisp').innerText = formatCurrency(childTotal);
+        document.getElementById('childExpRow').style.display = childTotal > 0 ? 'flex' : 'none';
+
+        return expTotal;
+    }
+
+    function renderLiabilities() {
+        let liabHtml = "";
+
+        if (state.bankLoan > 0) {
+            liabHtml += `<tr class="liability-bank">
+                <td>Bank Loan (10% int)</td>
+                <td>${formatCurrency(state.bankLoan)}</td>
+                <td><button class="action-btn" onclick="payBankLoan()">Pay Off</button></td>
+            </tr>`;
+        }
+
+        state.re.forEach((a, i) => {
+            if (a.liab > 0) {
+                liabHtml += `<tr class="liability-re">
+                    <td>Mortgage: ${a.name}</td>
+                    <td>${formatCurrency(a.liab)}</td>
+                    <td><button class="action-btn" onclick="payOffMortgage('re', ${i})">Pay Off</button></td>
+                </tr>`;
+            }
+        });
+
+        state.biz.forEach((a, i) => {
+            if (a.liab > 0) {
+                liabHtml += `<tr class="liability-biz">
+                    <td>Business Debt: ${a.name}</td>
+                    <td>${formatCurrency(a.liab)}</td>
+                    <td><button class="action-btn" onclick="payOffMortgage('biz', ${i})">Pay Off</button></td>
+                </tr>`;
+            }
+        });
+
+        state.expenses.forEach((e, i) => {
+            if (e.liab > 0) {
+                liabHtml += `<tr class="liability-expense">
+                    <td>Debt from: ${e.name}</td>
+                    <td>${formatCurrency(e.liab)}</td>
+                    <td><button class="action-btn" onclick="payExpenseDebt(${i})">Pay Off</button></td>
+                </tr>`;
+            }
+        });
+
+        document.getElementById('liabBody').innerHTML = liabHtml;
+    }
+
+    function renderAssetsAndPassive() {
+        let passive = 0;
+        let incHtml = "";
+        state.stocks.forEach(s => {
+            let d = s.qty * s.div;
+            passive += d;
+            if (d > 0) incHtml += `<tr class="asset-stock"><td>Div: ${s.name}</td><td>${formatCurrency(d)}</td></tr>`;
+        });
+        state.re.forEach(a => {
+            passive += a.flow;
+            incHtml += `<tr class="asset-re"><td>RE: ${a.name}</td><td>${formatCurrency(a.flow)}</td></tr>`;
+        });
+        state.biz.forEach(a => {
+            passive += a.flow;
+            incHtml += `<tr class="asset-biz"><td>Biz: ${a.name}</td><td>${formatCurrency(a.flow)}</td></tr>`;
+        });
+        document.getElementById('incomeBody').innerHTML = incHtml;
+        document.getElementById('passiveDisp').innerText = formatCurrency(passive);
+
+        document.getElementById('stockBody').innerHTML = state.stocks.map((s,i) => 
+            `<tr><td style="color:var(--cyan)">${s.name} (${s.qty}sh)</td><td><button class="action-btn" onclick="sellStock(${i})">Sell</button></td></tr>`
+        ).join('');
+        document.getElementById('reBody').innerHTML = state.re.map((a,i) => 
+            `<tr><td style="color:var(--gold)">${a.name} (+${formatCurrency(a.flow)})</td><td><button class="action-btn" onclick="sellAsset('re',${i})">Sell</button></td></tr>`
+        ).join('');
+        document.getElementById('bizBody').innerHTML = state.biz.map((a,i) => 
+            `<tr><td style="color:var(--purple)">${a.name} (+${formatCurrency(a.flow)})</td><td><button class="action-btn" onclick="sellAsset('biz',${i})">Sell</button></td></tr>`
+        ).join('');
+        return passive;
+    }
+
+    function calc() {
+        // Get elements safely
+        const flowEl    = document.getElementById('flowDisp');
+        const passiveEl = document.getElementById('passiveDisp');
+        const expEl     = document.getElementById('expTotal');
+        const escapeBtn = document.getElementById('escapeBtn');
+
+        if (!flowEl || !passiveEl || !expEl) {
+            console.warn("calc() skipped: missing DOM elements");
+            return;
+        }
+
+        const passive = renderAssetsAndPassive() || 0;
+        const expTotal = renderExpenses() || 0;
+
+        renderLiabilities();
+
+        // Fixed: include salary in monthly cash flow
+        const flow = state.sal + passive - expTotal;
+
+        flowEl.innerText    = formatCurrency(flow);
+        passiveEl.innerText = formatCurrency(passive);
+        expEl.innerText     = formatCurrency(expTotal);
+
+        if (escapeBtn) {
+            escapeBtn.style.display = (passive > expTotal && passive > 0) ? 'block' : 'none';
+        }
+
+        const progressPercent = expTotal > 0 ? Math.min(100, Math.round((passive / expTotal) * 100)) : 0;
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        if (progressBar && progressText) {
+            progressBar.style.width = progressPercent + '%';
+            progressText.innerText = progressPercent + '% to Escape';
+        }
+
+        save(false);
+    }
+
+	function save(prompt = false) {
+		try {
+			// Sync all visible fields to state
+			state.player   = document.getElementById('pName').value.trim();
+			state.auditor  = document.getElementById('aNameField').value.trim();  // ← this line was missing
+
+			state.sal      = parseInt(document.getElementById('sal').value) || 0;
+			state.numChildren   = parseInt(document.getElementById('numChildren').value) || 0;
+			state.perChildCost  = parseFloat(document.getElementById('perChildCost').value) || 0;
+
+			// Fast Track mode
+			state.isFastTrack = document.getElementById('fastTrackSheet').style.display === 'block';
+
+			// Optional: sync FT cash if edited
+			if (state.isFastTrack) {
+				const ftCashEl = document.getElementById('ftCashDisp');
+				if (ftCashEl) {
+					state.cash = parseFloat(ftCashEl.value.replace(/[$,]/g, '')) || state.cash;
+				}
+			}
+
+			const json = JSON.stringify(state);
+			localStorage.setItem(CURRENT_KEY, json);
+
+			if (prompt) alert("Game saved!");
+		} catch (e) {
+			console.error("Save failed:", e);
+			alert("Save failed – check console.");
+		}
+	}
+
+    function manualLoad() {
+        migrateAndLoad();
+        initUI();
+        const el = document.getElementById('loadStatus');
+        el.innerText = "Loaded successfully!";
+        el.style.display = 'block';
+        el.style.opacity = 1;
+        setTimeout(() => {
+            el.style.opacity = 0;
+            setTimeout(() => el.style.display = 'none', 1000);
+        }, 5000);
+    }
+
+    function migrateAndLoad() {
+		let data = null;
+		let source = "none";
+
+		try {
+			data = localStorage.getItem(CURRENT_KEY);
+			if (data) source = "current";
+
+			if (!data) {
+				for (const oldKey of PREVIOUS_KEYS) {
+					data = localStorage.getItem(oldKey);
+					if (data) {
+						localStorage.setItem(CURRENT_KEY, data);
+						source = oldKey;
+						console.log(`Migrated from ${oldKey}`);
+						break;
+					}
+				}
+			}
+
+			if (data) {
+				state = JSON.parse(data);
+
+				// Safety fixes for arrays and booleans
+				state.stocks     = Array.isArray(state.stocks)     ? state.stocks     : [];
+				state.re         = Array.isArray(state.re)         ? state.re         : [];
+				state.biz        = Array.isArray(state.biz)        ? state.biz        : [];
+				state.expenses   = Array.isArray(state.expenses)   ? state.expenses   : [];
+				state.ftBusinesses = Array.isArray(state.ftBusinesses) ? state.ftBusinesses : [];
+				state.isFastTrack  = !!state.isFastTrack;           // boolean
+				state.charityActive = !!state.charityActive;        // if you add it later
+
+				console.log(`Loaded from ${source} – cash: ${state.cash}, FT mode: ${state.isFastTrack}, dream: ${state.dream ? state.dream.name : 'none'}`);
+			} else {
+				state = getDefaultState();
+			}
+
+			// NEW: Restore correct sheet visibility
+			if (state.isFastTrack) {
+				document.getElementById('mainSheet').style.display = 'none';
+				document.getElementById('fastTrackSheet').style.display = 'block';
+			} else {
+				document.getElementById('fastTrackSheet').style.display = 'none';
+				document.getElementById('mainSheet').style.display = 'block';
+			}
+
+		} catch (e) {
+			console.error("Load error:", e);
+			state = getDefaultState();
+		}
+	}
+
+    function debugLoadInfo() {
+        const msg = `Key: ${CURRENT_KEY}\nCash: ${state.cash}\nStocks: ${state.stocks.length}\nRE: ${state.re.length}\nBiz: ${state.biz.length}\nExpenses: ${state.expenses.length}\nBank Loan: ${state.bankLoan}`;
+        alert(msg);
+        console.log("State:", state);
+    }
+
+    function resetGame() {
+		if (!confirm("Full reset? This will clear ALL progress, saved game, and return to default Rat Race.\n\nAre you sure?")) {
+			return;
+		}
+
+		// Clear storage
+		localStorage.removeItem(CURRENT_KEY);
+
+		// Reset state to defaults
+		state = getDefaultState();
+
+		// Clear undo
+		undoStack = [];
+
+		// Force Rat Race visibility
+		document.getElementById('fastTrackSheet').style.display = 'none';
+		document.getElementById('mainSheet').style.display = 'block';
+
+		// Hide FT-specific UI
+		document.getElementById('ftBadge').style.display = 'none';
+		document.getElementById('dice3Btn').style.display = 'none';
+
+		// Re-init UI
+		initUI();
+
+		// Explicitly force default values to show (safety layer)
+		document.getElementById('cashValue').value = formatCurrency(2000);
+		document.getElementById('cashInput').value = '2000';
+		document.getElementById('sal').value = '3000';
+		
+		// Force cash flow display to reflect default salary ($3,000)
+		document.getElementById('flowDisp').innerText = formatCurrency(3000);
+		document.getElementById('progressBar').style.width = '0%';
+		document.getElementById('progressText').innerText = '0% to Escape';
+
+		// Clear logs visually
+		document.getElementById('historyLog').innerHTML = '';
+		document.getElementById('ftHistoryLog').innerHTML = '';
+
+		alert("Game fully reset to default Rat Race state!\nSalary: $3,000/mo | Cash Flow: $3,000/mo | Cash: $2,000");
+	}
+	
+	function buyFtBusiness() {
+		const name  = document.getElementById('ftBizName').value.trim();
+		const flow  = parseFloat(document.getElementById('ftBizFlow').value) || 0;
+		const cost  = parseFloat(document.getElementById('ftBizCost').value) || 0;
+
+		if (!name)                  return alert("Enter a business name.");
+		if (flow <= 0)              return alert("Enter positive monthly cashflow.");
+
+		if (cost === 0) {
+			if (!confirm("This business has $0 cost (e.g. free card pull).\nProceed?")) return;
+		} else if (cost < 0) {
+			return alert("Cost cannot be negative.");
+		}
+
+		if (cost > 0 && state.cash < cost) {
+			return alert(`Not enough cash! Need ${formatCurrency(cost)}, you have ${formatCurrency(state.cash)}`);
+		}
+
+		if (!confirm(`Buy "${name}" for ${formatCurrency(cost)}?\n(+$${flow.toLocaleString()}/mo CF Day)`)) return;
+
+		pushState();
+		
+		// After successful purchase:
+		state.ftBusinesses.push({ name, flow, cost });
+		state.cash -= cost;
+		state.ftFlow += flow;
+		state.ftAddedFlow += flow;
+
+		log(`Bought Fast Track business "${name}" for ${formatCurrency(cost)} → +$${flow.toLocaleString()}/mo`, -cost);
+
+		document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
+		document.getElementById('ftFlowDisp').innerText = formatCurrency(state.ftFlow);
+
+		// Refresh UI - make sure EVERYTHING updates
+		document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
+		document.getElementById('ftFlowDisp').innerText = formatCurrency(state.ftFlow);
+
+		// Refresh tables & summary
+		renderFtPurchasedTable();          // businesses table + totals
+		renderFtStocksTable();             // if you have stocks, keep consistent
+
+		// Refresh the 3-column income record (Beginning / Monthly / New)
+		updateFtIncomeTable();             // this is critical for the "New CASHFLOW Day Income" column
+
+		// Refresh history log
+		renderHistory('ftHistoryLog');
+
+		// Optional: force a full calc-like refresh if needed (though not usually required in FT)
+		debouncedCalc();  // safe to call - it mostly affects Rat Race but won't hurt
+
+		document.getElementById('ftBizName').value = '';
+		document.getElementById('ftBizFlow').value = '';
+		document.getElementById('ftBizCost').value = '';
+
+		if (state.ftAddedFlow >= 50000) {
+			showVictory(`You reached $${state.ftAddedFlow.toLocaleString()} Monthly Cashflow from investments!\n(Condition B Victory)`);
+			launchConfetti();
+			// Optional: disable inputs
+			document.getElementById('ftBizName').disabled = true;
+			document.getElementById('ftBizFlow').disabled = true;
+			document.getElementById('ftBizCost').disabled = true;
+		}
+	}
+	
+	function sellFtBusiness(index) {
+		const biz = state.ftBusinesses[index];
+		if (!biz) return alert("Invalid business.");
+
+		// Suggest 10× monthly flow as common Cashflow sell rule
+		const suggestedPrice = biz.flow * 10;
+
+		const sellPriceStr = prompt(
+			`Sell price for "${biz.name}"?\n` +
+			`(Suggested: 10 × monthly CF = ${formatCurrency(suggestedPrice)})\n` +
+			`(Original cost was ${formatCurrency(biz.cost)})`,
+			suggestedPrice.toString()
+		);
+
+		if (!sellPriceStr) return; // canceled
+
+		const sellPrice = parseFloat(sellPriceStr);
+		if (isNaN(sellPrice) || sellPrice <= 0) {
+			return alert("Invalid sell price — must be positive number.");
+		}
+
+		if (!confirm(
+			`Sell "${biz.name}" for ${formatCurrency(sellPrice)}?\n` +
+			`→ Cash +${formatCurrency(sellPrice)}\n` +
+			`→ Cash Flow Day −${formatCurrency(biz.flow)}/mo`
+		)) return;
+
+		pushState();
+
+		// Update state
+		state.cash += sellPrice;
+		state.ftFlow -= biz.flow;
+		state.ftAddedFlow -= biz.flow;
+		state.ftBusinesses.splice(index, 1);
+
+		// Log
+		const gainLoss = sellPrice - biz.cost;
+		const glText = gainLoss >= 0 
+			? `gain +${formatCurrency(gainLoss)}` 
+			: `loss −${formatCurrency(Math.abs(gainLoss))}`;
+		
+		log(
+			`Sold Fast Track business "${biz.name}" for ${formatCurrency(sellPrice)} ` +
+			`(${glText}) → Cash Flow Day now ${formatCurrency(state.ftFlow)}`,
+			sellPrice
+		);
+
+		// Refresh everything
+		document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
+		document.getElementById('ftFlowDisp').innerText = formatCurrency(state.ftFlow);
+		renderFtPurchasedTable();
+		renderHistory('ftHistoryLog');
+		updateFtIncomeTable();  // if you still use the 3-column summary
+	}
+	
+	function buyFtStock() {
+		const name = document.getElementById('ftStockName').value.trim();
+		const shares = parseInt(document.getElementById('ftStockShares').value) || 0;
+		const price = parseFloat(document.getElementById('ftStockPrice').value) || 0;
+		const div = parseFloat(document.getElementById('ftStockDiv').value) || 0;
+
+		if (!Array.isArray(state.ftStocks)) {
+			state.ftStocks = [];
+		}
+		if (!name) return alert("Enter a stock/fund name.");
+		if (shares < 1) return alert("Enter at least 1 share.");
+		if (price <= 0) return alert("Price per share must be positive.");
+
+		const totalCost = shares * price;
+		if (totalCost > state.cash) {
+			return alert(`Not enough cash! Need ${formatCurrency(totalCost)}, you have ${formatCurrency(state.cash)}`);
+		}
+
+		if (!confirm(`Buy ${shares} shares of "${name}" for ${formatCurrency(totalCost)}?\n(+${formatCurrency(shares * div)}/mo to Cash Flow Day)`)) {
+			return;
+		}
+
+		pushState();
+
+		state.ftStocks.push({
+			name,
+			shares,
+			pricePerShare: price,
+			divPerShare: div
+		});
+
+		state.cash -= totalCost;
+
+		// Update Cash Flow Day
+		const incomeFromThis = shares * div;
+		state.ftFlow += incomeFromThis;
+		state.ftAddedFlow += incomeFromThis;
+
+		log(`Bought ${shares} shares of "${name}" @ ${formatCurrency(price)}/sh = ${formatCurrency(totalCost)} → +${formatCurrency(incomeFromThis)}/mo`, -totalCost);
+
+		// Clear form
+		document.getElementById('ftStockName').value = '';
+		document.getElementById('ftStockShares').value = '';
+		document.getElementById('ftStockPrice').value = '';
+		document.getElementById('ftStockDiv').value = '';
+
+		// Refresh UI
+		document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
+		document.getElementById('ftFlowDisp').innerText = formatCurrency(state.ftFlow);
+		renderFtStocksTable();
+		renderHistory('ftHistoryLog');
+		updateFtIncomeTable();
+	}
+	
+	function sellFtStock(index) {
+		const stock = state.ftStocks[index];
+		if (!stock) return alert("Invalid stock.");
+
+		// Ask how many shares to sell
+		const sellQtyStr = prompt(
+			`How many shares of "${stock.name}" to sell?\nYou own ${stock.shares.toLocaleString()} shares.`,
+			"1"
+		);
+
+		if (!sellQtyStr) return; // user canceled
+
+		const sellQty = parseInt(sellQtyStr);
+		if (isNaN(sellQty) || sellQty <= 0 || sellQty > stock.shares) {
+			return alert(`Invalid quantity. Must sell between 1 and ${stock.shares.toLocaleString()}.`);
+		}
+
+		// Ask for sell price per share
+		const sellPriceStr = prompt(
+			`Sell price per share for "${stock.name}"?\n(Original purchase price was ${formatCurrency(stock.pricePerShare)})`,
+			stock.pricePerShare.toString()
+		);
+
+		if (!sellPriceStr) return;
+
+		const sellPrice = parseFloat(sellPriceStr);
+		if (isNaN(sellPrice) || sellPrice <= 0) {
+			return alert("Invalid sell price.");
+		}
+
+		if (!confirm(`Sell ${sellQty.toLocaleString()} shares of "${stock.name}" @ ${formatCurrency(sellPrice)} each?\nProceeds: ${formatCurrency(sellQty * sellPrice)}`)) {
+			return;
+		}
+
+		pushState();
+
+		const proceeds = sellQty * sellPrice;
+		const incomeLost = sellQty * stock.divPerShare;
+
+		// Update stock
+		stock.shares -= sellQty;
+
+		// Remove if zero shares left
+		if (stock.shares <= 0) {
+			state.ftStocks.splice(index, 1);
+		}
+
+		// Update cash and cash flow
+		state.cash += proceeds;
+		state.ftFlow -= incomeLost;
+		state.ftAddedFlow -= incomeLost;
+
+		// Log
+		const gl = proceeds - (sellQty * stock.pricePerShare);
+		const glText = gl >= 0 ? `gain +${formatCurrency(gl)}` : `loss -${formatCurrency(Math.abs(gl))}`;
+		log(`Sold ${sellQty.toLocaleString()} shares of "${stock.name}" @ ${formatCurrency(sellPrice)} = ${formatCurrency(proceeds)} (${glText})`, proceeds);
+
+		if (incomeLost > 0) {
+			log(`Cash Flow Day decreased by ${formatCurrency(incomeLost)}/mo from selling "${stock.name}"`, -incomeLost);
+		}
+
+		// Refresh UI
+		document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
+		document.getElementById('ftFlowDisp').innerText = formatCurrency(state.ftFlow);
+		renderFtStocksTable();
+		renderHistory('ftHistoryLog');
+		updateFtIncomeTable();
+	}
+
+	function renderFtStocksTable() {
+		const tbody = document.getElementById('ftStocksTableBody');
+		const countEl = document.getElementById('ftStockCount');
+		const totalFlowEl = document.getElementById('ftStockTotalFlow');
+		if (!tbody || !countEl || !totalFlowEl) return;
+
+		tbody.innerHTML = '';
+		let totalCount = 0;
+		let totalIncome = 0;
+
+		state.ftStocks.forEach((stock, index) => {
+			const income = stock.shares * stock.divPerShare;
+			totalCount += stock.shares;
+			totalIncome += income;
+
+			const row = document.createElement('tr');
+			row.innerHTML = `
+				<td style="padding:9px 12px; border:1px solid var(--ft-blue); color: var(--ft-blue); font-weight: bold;">
+					${stock.name || 'Unnamed Stock'}
+				</td>
+				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:right; color: var(--ft-blue); font-weight: bold;">
+					${stock.shares.toLocaleString()}
+				</td>
+				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:right; color: var(--red); font-weight: bold;">
+					${formatCurrency(stock.pricePerShare)}
+				</td>
+				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:right; color: var(--green); font-weight: bold;">
+					${formatCurrency(income)}
+				</td>
+				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:center;">
+					<button class="action-btn"
+							style="background: var(--red); color: white; font-size: 0.9em; padding: 6px 10px;"
+							onclick="sellFtStock(${index})">
+						Sell
+					</button>
+				</td>
+			`;
+			tbody.appendChild(row);
+		});
+
+		// Update summary with vibrant cyan
+		countEl.textContent = totalCount.toLocaleString();
+		countEl.style.color = 'var(--ft-blue)';
+		countEl.style.fontWeight = 'bold';
+
+		totalFlowEl.textContent = formatCurrency(totalIncome);
+		totalFlowEl.style.color = 'var(--green)';
+		totalFlowEl.style.fontWeight = 'bold';
+
+		// Hide if empty
+		const container = tbody.closest('div[style*="margin: 30px 0; background: rgba(13, 31, 58, 0.7)"]');
+		if (container) {
+			container.style.display = totalCount > 0 ? 'block' : 'none';
+		}
+	}
+
+	function renderFtPurchasedTable() {
+		const tbody = document.getElementById('ftPurchasedTableBody');
+		const countEl = document.getElementById('ftBizCount');
+		const totalFlowEl = document.getElementById('ftBizTotalFlow');
+		if (!tbody || !countEl || !totalFlowEl) return;
+
+		tbody.innerHTML = '';
+		let totalCount = state.ftBusinesses.length;
+		let totalFlow = 0;
+
+		state.ftBusinesses.forEach((biz, index) => {
+			totalFlow += biz.flow || 0;
+			const row = document.createElement('tr');
+			row.innerHTML = `
+				<td style="padding:9px 12px; border:1px solid var(--ft-blue); color: var(--purple); font-weight: bold;">
+					${biz.name || 'Unnamed Business'}
+				</td>
+				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:right; color: var(--red); font-weight: bold;">
+					${formatCurrency(biz.cost || 0)}
+				</td>
+				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:right; color: var(--green); font-weight: bold;">
+					${formatCurrency(biz.flow || 0)}
+				</td>
+				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:center;">
+					<button class="action-btn" 
+							style="background: var(--red); color: white; font-size: 0.9em; padding: 5px 10px;"
+							onclick="sellFtBusiness(${index})">
+						Sell
+					</button>
+				</td>
+			`;
+			tbody.appendChild(row);
+		});
+
+		countEl.textContent = totalCount;
+		countEl.style.color = 'var(--purple)';  // reinforce purple for count
+
+		totalFlowEl.textContent = formatCurrency(totalFlow);
+		totalFlowEl.style.color = 'var(--green)';  // green for positive CF total
+
+		// Hide entire section if no businesses
+		const container = tbody.closest('div[style*="margin: 30px 0; background: rgba(13, 31, 58, 0.7)"]');
+		if (container) {
+			container.style.display = totalCount > 0 ? 'block' : 'none';
+		}
+	}
+	
+	function updateDreamDisplay() {
+		if (!state.dream) return;
+
+		const nameDisp = document.getElementById('ftDreamNameDisp');
+		const costDisp = document.getElementById('ftDreamCostDisp');
+		const buyBtn = document.getElementById('buyDreamBtn');
+
+		if (nameDisp && costDisp) {
+			nameDisp.innerText = state.dream.name;
+			costDisp.innerText = formatCurrency(state.dream.cost);
+
+			if (state.dream.purchased) {
+				nameDisp.innerHTML += ' <span style="color:var(--ft-gold); font-weight:bold;">(Purchased!)</span>';
+			}
+		}
+
+		if (buyBtn) {
+			buyBtn.style.display = (state.dream.purchased || !state.isFastTrack) ? 'none' : 'inline-block';
+		}
+	}
+
+	function buyFtDream() {
+		if (!state.dream) return alert("No dream defined!");
+
+		const cost = state.dream.cost;
+
+		if (state.cash < cost) {
+			return alert(`Not enough cash! Need ${formatCurrency(cost)}, you have ${formatCurrency(state.cash)}`);
+		}
+
+		if (!confirm(`Buy your dream "${state.dream.name}" for ${formatCurrency(cost)} right now?`)) return;
+
+		pushState();
+		state.cash -= cost;
+		state.dream.purchased = true;
+		state.dream.purchaseDate = new Date().toLocaleString();
+
+		log(`Purchased Dream: "${state.dream.name}" for ${formatCurrency(cost)}`, -cost);
+
+		document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
+		renderHistory('ftHistoryLog');
+		launchConfetti();  // Single burst for any Dream purchase
+
+		updateDreamDisplay();
+
+		if (state.ftFlow >= 50000) {
+			showVictory(`You bought "${state.dream.name}" with $${state.ftFlow.toLocaleString()} Monthly Cashflow!\n(Condition A Ultimate Victory!)`);
+			launchConfetti();
+			setTimeout(launchConfetti, 800);
+			document.getElementById('buyDreamBtn').style.display = 'none';
+		} else {
+			// Keep the normal alert for non-win Dream purchase
+			alert(`Dream purchased!\n"${state.dream.name}" is yours.\n(Reach $50k/mo CF from investments to win via Condition B!)`);
+		}
+	}
+	
+	function handleOpportunity(type) {
+		if (!state.isFastTrack) return alert("Only available in Fast Track!");
+
+		let msg = "";
+		let action = null;
+
+		switch (type) {
+			case 'charity':
+				if (confirm("Opt into Charity? You may roll 1, 2, or 3 dice for the rest of the game.")) {
+					alert("Charity activated! Use the 3-dice button anytime.");
+					// You could store state.charityActive = true; and force dice3Btn visible
+					document.getElementById('dice3Btn').style.display = 'inline-block';
+					log("Activated Charity – 3 dice option enabled", 0);
+				}
+				return;
+
+			case 'taxaudit':
+				msg = "Tax Audit: Pay ½ of your current cash?";
+				action = () => {
+					const half = Math.floor(state.cash / 2);
+					state.cash -= half;
+					log(`Tax Audit: Paid $${half.toLocaleString()} (½ cash)`, -half);
+					updateCashDisplay();
+				};
+				break;
+
+			case 'divorce':
+				msg = "Divorce: Lose ALL your cash?";
+				action = () => {
+					const lost = state.cash;
+					state.cash = 0;
+					log(`Divorce: Lost all cash $${lost.toLocaleString()}`, -lost);
+					updateCashDisplay();
+				};
+				break;
+
+			case 'lawsuit':
+				msg = "Lawsuit: Pay ½ of your current cash?";
+				action = () => {
+					const half = Math.floor(state.cash / 2);
+					state.cash -= half;
+					log(`Lawsuit: Paid $${half.toLocaleString()} (½ cash)`, -half);
+					updateCashDisplay();
+				};
+				break;
+		}
+
+		if (confirm(msg)) {
+			pushState();
+			if (action) action();
+			renderHistory(state.isFastTrack ? 'ftHistoryLog' : 'historyLog');
+			debouncedCalc();
+		}
+	}
+	
+	function updateFtIncomeTable() {
+		const beginTd = document.getElementById('ftBeginCF');
+		const monthlyTd = document.getElementById('ftMonthlyCF');
+		const newTd    = document.getElementById('ftNewCF');
+
+		if (!beginTd || !monthlyTd || !newTd) return;
+
+		// Beginning CF = initial escape value (should only set once on escape)
+		let initialFlow = parseFloat(beginTd.dataset.initial);
+		if (!initialFlow || isNaN(initialFlow)) {
+			initialFlow = state.ftFlow - state.ftAddedFlow;  // fallback calculation
+			if (initialFlow <= 0) initialFlow = state.ftFlow; // safety
+			beginTd.dataset.initial = initialFlow;
+		}
+
+		const addedFlow = state.ftBusinesses.reduce((sum, b) => sum + (b.flow || 0), 0);
+		// Note: if you later add FT stocks/RE income, include them here too
+
+		beginTd.innerText   = formatCurrency(initialFlow);
+		monthlyTd.innerText = formatCurrency(state.ftFlow);
+		newTd.innerText     = formatCurrency(addedFlow);  // this should now show $5,000 after buy
+	}
+
+    document.body.insertAdjacentHTML('afterbegin', `
+        <div id="professionCard" class="profession-card" style="display: none;">
+            <div class="card-inner">
+                <div class="card-front">
+                    <h2>Drawing Profession...</h2>
+                    <div class="card-symbol">🎴</div>
+                </div>
+                <div class="card-back">
+                    <h2 id="cardProfession"></h2>
+                    <p id="cardSummary"></p>
+                    <button class="action-btn" onclick="closeCard()">Got it!</button>
+                </div>
+            </div>
+        </div>
+    `);
+
+    window.onload = () => {
+        migrateAndLoad();
+        undoStack = [];
+        initUI();
+    };
+</script>
+</body>
+</html>
