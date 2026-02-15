@@ -1286,6 +1286,9 @@
 
 			// Render history multiple times for reliability
 			renderHistory('ftHistoryLog');
+			renderFtPurchasedTable();
+			renderFtStocksTable();
+			updateFtIncomeTable();
 			document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
 			document.getElementById('ftFlowDisp').innerText = formatCurrency(state.ftFlow);
 			
@@ -3020,5 +3023,6 @@
 </body>
 
 </html>
+
 
 
