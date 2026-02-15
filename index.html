@@ -2521,22 +2521,28 @@
 
 		log(`Bought Fast Track business "${name}" for ${formatCurrency(cost)} → +$${flow.toLocaleString()}/mo`, -cost);
 
+		// Force refresh all Fast Track UI elements after purchase
 		document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
 		document.getElementById('ftFlowDisp').innerText = formatCurrency(state.ftFlow);
-
-		// Refresh UI - make sure EVERYTHING updates
-		document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
-		document.getElementById('ftFlowDisp').innerText = formatCurrency(state.ftFlow);
-
-		// Refresh tables & summary
-		renderFtPurchasedTable();          // businesses table + totals
-		renderFtStocksTable();             // if you have stocks, keep consistent
-
-		// Refresh the 3-column income record (Beginning / Monthly / New)
-		updateFtIncomeTable();             // this is critical for the "New CASHFLOW Day Income" column
-
-		// Refresh history log
+		
+		// Re-render tables
+		renderFtPurchasedTable();
+		renderFtStocksTable();  // safe even if stocks unchanged
+		
+		// Update the income record table (Beginning/Monthly/New CF)
+		updateFtIncomeTable();
+		
+		// Refresh log
 		renderHistory('ftHistoryLog');
+		
+		// Force container visibility if items exist (bypass fragile selector)
+		const bizSection = document.querySelector('#fastTrackSheet div h3[contains(text(),"Purchased Fast Track Businesses")]')?.closest('div[style*="margin: 30px 0"]');
+		if (bizSection && state.ftBusinesses.length > 0) {
+		    bizSection.style.display = 'block';
+		}
+		
+		// Debug to console - open F12 > Console to see if this runs
+		console.log('Buy FT Business complete - businesses now:', state.ftBusinesses.length, 'flow:', state.ftFlow);
 
 		// Optional: force a full calc-like refresh if needed (though not usually required in FT)
 		debouncedCalc();  // safe to call - it mostly affects Rat Race but won't hurt
@@ -2650,18 +2656,28 @@
 
 		log(`Bought ${shares} shares of "${name}" @ ${formatCurrency(price)}/sh = ${formatCurrency(totalCost)} → +${formatCurrency(incomeFromThis)}/mo`, -totalCost);
 
-		// Clear form
-		document.getElementById('ftStockName').value = '';
-		document.getElementById('ftStockShares').value = '';
-		document.getElementById('ftStockPrice').value = '';
-		document.getElementById('ftStockDiv').value = '';
-
-		// Refresh UI
+		// Force refresh all Fast Track UI elements after purchase
 		document.getElementById('ftCashDisp').value = formatCurrency(state.cash);
 		document.getElementById('ftFlowDisp').innerText = formatCurrency(state.ftFlow);
-		renderFtStocksTable();
-		renderHistory('ftHistoryLog');
+		
+		// Re-render tables
+		renderFtPurchasedTable();
+		renderFtStocksTable();  // safe even if stocks unchanged
+		
+		// Update the income record table (Beginning/Monthly/New CF)
 		updateFtIncomeTable();
+		
+		// Refresh log
+		renderHistory('ftHistoryLog');
+		
+		// Force container visibility if items exist (bypass fragile selector)
+		const bizSection = document.querySelector('#fastTrackSheet div h3[contains(text(),"Purchased Fast Track Businesses")]')?.closest('div[style*="margin: 30px 0"]');
+		if (bizSection && state.ftBusinesses.length > 0) {
+		    bizSection.style.display = 'block';
+		}
+		
+		// Debug to console - open F12 > Console to see if this runs
+		console.log('Buy FT Business complete - businesses now:', state.ftBusinesses.length, 'flow:', state.ftFlow);
 	}
 	
 	function sellFtStock(index) {
@@ -2782,10 +2798,13 @@
 		totalFlowEl.style.color = 'var(--green)';
 		totalFlowEl.style.fontWeight = 'bold';
 
-		// Hide if empty
-		const container = tbody.closest('div[style*="margin: 30px 0; background: rgba(13, 31, 58, 0.7)"]');
+		// Use this more robust version:
+		let container = tbody.closest('div');
+		while (container && !container.querySelector('h3')) {  // walk up until we find the section with h3 title
+		    container = container.parentElement;
+		}
 		if (container) {
-			container.style.display = totalCount > 0 ? 'block' : 'none';
+		    container.style.display = totalCount > 0 ? 'block' : 'none';
 		}
 	}
 
@@ -2995,3 +3014,4 @@
 </body>
 
 </html>
+
