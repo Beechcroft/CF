@@ -1775,6 +1775,20 @@
 		}
 	}
 
+	function findSectionByHeadingText(headingTextPart) {
+	    const headings = document.querySelectorAll('#fastTrackSheet h3');
+	    for (const h3 of headings) {
+	        if (h3.textContent.includes(headingTextPart)) {
+	            let container = h3;
+	            while (container && container.tagName !== 'DIV') {
+	                container = container.parentElement;
+	            }
+	            return container;
+	        }
+	    }
+	    return null;
+	}
+
 	function makeCashEditable() {
 		const cashEl = document.getElementById('cashValue');
 		const editBtn = document.getElementById('editCashBtn');
@@ -2531,6 +2545,16 @@
 		// Re-render tables
 		renderFtPurchasedTable();
 		renderFtStocksTable();  // safe even if stocks unchanged
+		// Force visibility of relevant sections
+		const bizSection = findSectionByHeadingText("Purchased Fast Track Businesses");
+		if (bizSection && state.ftBusinesses.length > 0) {
+		    bizSection.style.display = 'block';
+		}
+		
+		const stockSection = findSectionByHeadingText("Purchased Fast Track Stocks");
+		if (stockSection && state.ftStocks.length > 0) {
+		    stockSection.style.display = 'block';
+		}
 		
 		// Update the income record table (Beginning/Monthly/New CF)
 		updateFtIncomeTable();
@@ -2538,11 +2562,12 @@
 		// Refresh log
 		renderHistory('ftHistoryLog');
 		
-		// Force container visibility if items exist (bypass fragile selector)
-		const bizSection = document.querySelector('#fastTrackSheet div h3[contains(text(),"Purchased Fast Track Businesses")]')?.closest('div[style*="margin: 30px 0"]');
-		if (bizSection && state.ftBusinesses.length > 0) {
-		    bizSection.style.display = 'block';
-		}
+	// Simple & reliable: force visibility of the parent sections if they have content now
+		const bizContainer = document.getElementById('fastTrackSheet').querySelector('div h3[contains("Purchased Fast Track Businesses")]')?.closest('div');
+		if (bizContainer) bizContainer.style.display = 'block';
+		
+		const stockContainer = document.getElementById('fastTrackSheet').querySelector('div h3[contains("Buy Fast Track Stocks")]')?.closest('div');
+		if (stockContainer) stockContainer.style.display = 'block';
 		
 		// Debug to console - open F12 > Console to see if this runs
 		console.log('Buy FT Business complete - businesses now:', state.ftBusinesses.length, 'flow:', state.ftFlow);
@@ -2666,6 +2691,17 @@
 		// Re-render tables
 		renderFtPurchasedTable();
 		renderFtStocksTable();  // safe even if stocks unchanged
+
+		// Force visibility of relevant sections
+		const bizSection = findSectionByHeadingText("Purchased Fast Track Businesses");
+		if (bizSection && state.ftBusinesses.length > 0) {
+		    bizSection.style.display = 'block';
+		}
+		
+		const stockSection = findSectionByHeadingText("Purchased Fast Track Stocks");
+		if (stockSection && state.ftStocks.length > 0) {
+		    stockSection.style.display = 'block';
+		}
 		
 		// Update the income record table (Beginning/Monthly/New CF)
 		updateFtIncomeTable();
@@ -2673,11 +2709,12 @@
 		// Refresh log
 		renderHistory('ftHistoryLog');
 		
-		// Force container visibility if items exist (bypass fragile selector)
-		const bizSection = document.querySelector('#fastTrackSheet div h3[contains(text(),"Purchased Fast Track Businesses")]')?.closest('div[style*="margin: 30px 0"]');
-		if (bizSection && state.ftBusinesses.length > 0) {
-		    bizSection.style.display = 'block';
-		}
+		// Simple & reliable: force visibility of the parent sections if they have content now
+		const bizContainer = document.getElementById('fastTrackSheet').querySelector('div h3[contains("Purchased Fast Track Businesses")]')?.closest('div');
+		if (bizContainer) bizContainer.style.display = 'block';
+		
+		const stockContainer = document.getElementById('fastTrackSheet').querySelector('div h3[contains("Buy Fast Track Stocks")]')?.closest('div');
+		if (stockContainer) stockContainer.style.display = 'block';
 		
 		// Debug to console - open F12 > Console to see if this runs
 		console.log('Buy FT Business complete - businesses now:', state.ftBusinesses.length, 'flow:', state.ftFlow);
@@ -3023,6 +3060,7 @@
 </body>
 
 </html>
+
 
 
 
