@@ -2572,6 +2572,9 @@
 		// Debug to console - open F12 > Console to see if this runs
 		console.log('Buy FT Business complete - businesses now:', state.ftBusinesses.length, 'flow:', state.ftFlow);
 
+		showFtSection("Purchased Fast Track Businesses");
+		showFtSection("Purchased Fast Track Stocks");
+
 		// Optional: force a full calc-like refresh if needed (though not usually required in FT)
 		debouncedCalc();  // safe to call - it mostly affects Rat Race but won't hurt
 
@@ -2709,15 +2712,11 @@
 		// Refresh log
 		renderHistory('ftHistoryLog');
 		
-		// Simple & reliable: force visibility of the parent sections if they have content now
-		const bizContainer = document.getElementById('fastTrackSheet').querySelector('div h3[contains("Purchased Fast Track Businesses")]')?.closest('div');
-		if (bizContainer) bizContainer.style.display = 'block';
-		
-		const stockContainer = document.getElementById('fastTrackSheet').querySelector('div h3[contains("Buy Fast Track Stocks")]')?.closest('div');
-		if (stockContainer) stockContainer.style.display = 'block';
-		
 		// Debug to console - open F12 > Console to see if this runs
 		console.log('Buy FT Business complete - businesses now:', state.ftBusinesses.length, 'flow:', state.ftFlow);
+
+		showFtSection("Purchased Fast Track Businesses");
+		showFtSection("Purchased Fast Track Stocks");
 	}
 	
 	function sellFtStock(index) {
@@ -3060,6 +3059,7 @@
 </body>
 
 </html>
+
 
 
 
