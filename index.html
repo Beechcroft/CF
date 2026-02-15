@@ -2848,8 +2848,14 @@
 		totalFlowEl.textContent = formatCurrency(totalFlow);
 		totalFlowEl.style.color = 'var(--green)';  // green for positive CF total
 
-		// Hide entire section if no businesses
-		const container = tbody.closest('div[style*="margin: 30px 0; background: rgba(13, 31, 58, 0.7)"]');
+		// Use this more robust version:
+		let container = tbody.closest('div');
+		while (container && !container.querySelector('h3')) {  // walk up until we find the section with h3 title
+		    container = container.parentElement;
+		}
+		if (container) {
+		    container.style.display = totalCount > 0 ? 'block' : 'none';
+		}
 		if (container) {
 			container.style.display = totalCount > 0 ? 'block' : 'none';
 		}
@@ -3014,4 +3020,5 @@
 </body>
 
 </html>
+
 
