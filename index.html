@@ -2562,13 +2562,6 @@
 		// Refresh log
 		renderHistory('ftHistoryLog');
 		
-	// Simple & reliable: force visibility of the parent sections if they have content now
-		const bizContainer = document.getElementById('fastTrackSheet').querySelector('div h3[contains("Purchased Fast Track Businesses")]')?.closest('div');
-		if (bizContainer) bizContainer.style.display = 'block';
-		
-		const stockContainer = document.getElementById('fastTrackSheet').querySelector('div h3[contains("Buy Fast Track Stocks")]')?.closest('div');
-		if (stockContainer) stockContainer.style.display = 'block';
-		
 		// Debug to console - open F12 > Console to see if this runs
 		console.log('Buy FT Business complete - businesses now:', state.ftBusinesses.length, 'flow:', state.ftFlow);
 
@@ -3059,6 +3052,7 @@
 </body>
 
 </html>
+
 
 
 
