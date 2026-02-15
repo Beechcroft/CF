@@ -2563,10 +2563,7 @@
 		renderHistory('ftHistoryLog');
 		
 		// Debug to console - open F12 > Console to see if this runs
-		console.log('Buy FT Business complete - businesses now:', state.ftBusinesses.length, 'flow:', state.ftFlow);
-
-		showFtSection("Purchased Fast Track Businesses");
-		showFtSection("Purchased Fast Track Stocks");
+		console.log('Buy FT Business complete - businesses now:', state.ftBusinesses.length, 'flow:', state.ftFlow)
 
 		// Optional: force a full calc-like refresh if needed (though not usually required in FT)
 		debouncedCalc();  // safe to call - it mostly affects Rat Race but won't hurt
@@ -2707,9 +2704,6 @@
 		
 		// Debug to console - open F12 > Console to see if this runs
 		console.log('Buy FT Business complete - businesses now:', state.ftBusinesses.length, 'flow:', state.ftFlow);
-
-		showFtSection("Purchased Fast Track Businesses");
-		showFtSection("Purchased Fast Track Stocks");
 	}
 	
 	function sellFtStock(index) {
@@ -3052,6 +3046,7 @@
 </body>
 
 </html>
+
 
 
 
