@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+I<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CASHFLOW® Auditor - v12.47 (Home Stretch)</title>
+    <title>CASHFLOW® Auditor - v12.48 (Final)</title>
     <style>
         :root { 
             --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; 
@@ -604,6 +604,11 @@
 		max-width: 90%;             /* or 100% if you want edge-to-edge */
 		margin: 35px auto 50px auto;
 	}
+	
+	.action-btn.foreclose-btn {
+		background: #8b0000 !important; /* Darker red for danger */
+		color: white !important;
+	}
 
 </style>
 </head>
@@ -766,7 +771,7 @@
             <div style="font-size:0.9em; color:var(--gold); font-weight:bold; margin:12px 0 6px;">Real Estate</div>
             <div class="add-zone" id="reAdd">
                 <input type="text" id="reName" placeholder="Property name">
-                <input type="number" id="reFlow" placeholder="Monthly CF" min="0">
+                <input type="number" id="reFlow" placeholder="Monthly CF (negative = loss)" step="100">
                 <input type="number" id="reDown" placeholder="Down payment" min="0">
                 <input type="number" id="reCost" placeholder="Total cost" min="0">
                 <button class="action-btn" onclick="addAsset('re')">Buy</button>
@@ -776,7 +781,7 @@
             <div style="font-size:0.9em; color:var(--purple); font-weight:bold; margin:12px 0 6px;">Business</div>
             <div class="add-zone" id="bizAdd">
                 <input type="text" id="bizName" placeholder="Business name">
-                <input type="number" id="bizFlow" placeholder="Monthly CF" min="0">
+                <input type="number" id="bizFlow" placeholder="Monthly CF (negative = loss)" step="100">
                 <input type="number" id="bizDown" placeholder="Down payment" min="0">
                 <input type="number" id="bizCost" placeholder="Total cost" min="0">
                 <button class="action-btn" onclick="addAsset('biz')">Buy</button>
@@ -1934,50 +1939,91 @@
     }
 
     function addAsset(type) {
-        let name, flow, down, cost, zoneId;
+		let name, flow, down, cost, zoneId;
 
-        if (type === 're') {
-            zoneId = 'reAdd';
-            name  = document.getElementById('reName').value.trim() || "Property";
-            flow  = parseFloat(document.getElementById('reFlow').value) || 0;
-            down  = parseFloat(document.getElementById('reDown').value) || 0;
-            cost  = parseFloat(document.getElementById('reCost').value) || 0;
-        } else if (type === 'biz') {
-            zoneId = 'bizAdd';
-            name  = document.getElementById('bizName').value.trim() || "Business";
-            flow  = parseFloat(document.getElementById('bizFlow').value) || 0;
-            down  = parseFloat(document.getElementById('bizDown').value) || 0;
-            cost  = parseFloat(document.getElementById('bizCost').value) || 0;
-        } else return;
+		if (type === 're') {
+			zoneId = 'reAdd';
+			name = document.getElementById('reName').value.trim() || "Property";
+			flow = parseFloat(document.getElementById('reFlow').value) || 0;
+			down  = parseFloat(document.getElementById('reDown').value) || 0;
+			cost  = parseFloat(document.getElementById('reCost').value) || 0;
+		} else if (type === 'biz') {
+			zoneId = 'bizAdd';
+			name = document.getElementById('bizName').value.trim() || "Business";
+			flow = parseFloat(document.getElementById('bizFlow').value) || 0;
+			down  = parseFloat(document.getElementById('bizDown').value) || 0;
+			cost  = parseFloat(document.getElementById('bizCost').value) || 0;
+		} else return;
 
-        if (flow < 0 || down < 0 || cost <= 0) {
-            alert("Please check values — cost must be positive, flow/down >= 0.");
-            return;
-        }
+		// ── Validation & Warnings ───────────────────────────────────────────────
 
-        if (down > state.cash) {
-            alert(`Not enough cash for down payment! Need $${down.toLocaleString()}, have $${state.cash.toLocaleString()}`);
-            return;
-        }
+		// 1. Total cost must not be negative
+		if (cost < 0) {
+			alert("Total cost cannot be negative.");
+			return;
+		}
 
-        syncIdentityToState();
-        pushState();
-        const asset = { name, flow, down, cost, liab: cost - down };
+		// 2. Down payment cannot be negative
+		if (down < 0) {
+			alert("Down payment cannot be negative.");
+			return;
+		}
 
-        if (type === 're') state.re.push(asset);
-        else               state.biz.push(asset);
+		// 3. Down payment cannot exceed current cash
+		if (down > state.cash) {
+			alert(`Not enough cash for down payment!\nNeed $${down.toLocaleString()}, you have $${state.cash.toLocaleString()}`);
+			return;
+		}
 
-        state.cash -= down;
+		// 4. Zero or negative cash flow → warning + confirmation
+		if (flow <= 0) {
+			const msg = flow === 0
+				? `This ${type.toUpperCase()} has ZERO monthly cash flow.\nIt will not increase (or decrease) your income.\n\nAre you sure you want to acquire it?`
+				: `This ${type.toUpperCase()} has NEGATIVE cash flow (${formatCurrency(flow)}/mo).\nIt will **cost** you money every month until sold.\n\nAre you sure you want to acquire this money-losing asset?`;
 
-        log(`Acquired ${type.toUpperCase()}: ${name}  (CF $${flow}/mo, down $${down.toLocaleString()}, total $${cost.toLocaleString()})`, -down);
-        if (flow > 0) {
-            log(`Passive income increased by $${flow.toLocaleString()}/mo from ${name}`, 0);
-        }
+			if (!confirm(msg)) {
+				return;
+			}
+		}
 
-        document.querySelectorAll(`#${zoneId} input`).forEach(inp => inp.value = '');
-        updateCashDisplay();
-        debouncedCalc();
-    }
+		// 5. Zero total cost → special warning
+		if (cost === 0) {
+			if (!confirm(`This ${type.toUpperCase()} has ZERO total cost (free / gift / 100% financed).\n\nProceed with acquisition?`)) {
+				return;
+			}
+		}
+
+		// ── Proceed with acquisition ────────────────────────────────────────────
+
+		syncIdentityToState();
+		pushState();
+
+		const asset = { name, flow, down, cost, liab: cost - down };
+
+		if (type === 're') state.re.push(asset);
+		else state.biz.push(asset);
+
+		state.cash -= down;
+
+		// Log with clear sign
+		const flowSign = flow >= 0 ? '+' : '';
+		log(`Acquired ${type.toUpperCase()}: "${name}"  (CF ${flowSign}${formatCurrency(Math.abs(flow))}/mo, down $${down.toLocaleString()}, total cost $${cost.toLocaleString()})`, -down);
+
+		// Extra log line for negative flow
+		if (flow < 0) {
+			log(`→ This asset is currently losing you $${Math.abs(flow).toLocaleString()}/mo`, -Math.abs(flow));
+		} else if (flow === 0) {
+			log(`→ This asset produces no monthly cash flow`, 0);
+		} else {
+			log(`→ Passive income increased by $${flow.toLocaleString()}/mo`, flow);
+		}
+
+		// Clear inputs
+		document.querySelectorAll(`#${zoneId} input`).forEach(inp => inp.value = '');
+
+		updateCashDisplay();
+		debouncedCalc();
+	}
 
     function handleSalaryChange(el) {
         if (isProgrammaticUpdate) return;
@@ -2040,6 +2086,46 @@
 		debouncedCalc();
 	}
 
+	function applyRatRaceStockSplit(index) {
+		const s = state.stocks[index];
+		if (!s) return alert("Invalid stock.");
+
+		const splitOptions = [
+			{ label: "2-for-1 Split (double shares, halve cost/share)", factor: 2 },
+			{ label: "3-for-1 Split", factor: 3 },
+			{ label: "Reverse 1-for-2 (halve shares, double cost/share)", factor: 0.5 },
+			{ label: "Custom factor", custom: true }
+		];
+
+		let promptText = `Stock Split for "${s.name}"?\nCurrent: ${s.qty} shares @ ${formatCurrency(s.cost)}\n\nOptions:\n`;
+		splitOptions.forEach((opt, i) => promptText += `${i+1}) ${opt.label}\n`);
+
+		const choice = prompt(promptText + "\nEnter number (1–4) or 0 to cancel:");
+		const num = parseInt(choice);
+		if (!num || num < 1 || num > splitOptions.length) return;
+
+		const opt = splitOptions[num - 1];
+		let factor = opt.custom 
+			? parseFloat(prompt("Enter custom factor (e.g. 2 for 2:1, 0.5 for reverse):")) 
+			: opt.factor;
+
+		if (isNaN(factor) || factor <= 0) return alert("Invalid factor.");
+
+		pushState();
+
+		const oldQty = s.qty;
+		const oldCost = s.cost;
+
+		s.qty = Math.round(s.qty * factor);
+		s.cost = oldCost / factor;  // cost per share adjusts inversely
+
+		log(`Stock split on "${s.name}": ${factor >= 2 ? factor+'-for-1' : '1-for-'+Math.round(1/factor)} → ${oldQty} → ${s.qty} shares @ ${formatCurrency(oldCost)} → ${formatCurrency(s.cost)}`, 0);
+
+		// Re-render Rat Race assets table
+		renderAssetsAndPassive();
+		debouncedCalc();
+	}
+	
     function sellAsset(type, index) {
 		let asset, array;
 		if (type === 're') {
@@ -2051,14 +2137,21 @@
 		}
 		if (!asset) return alert("Invalid asset index.");
 
-		const sellPrice = parseFloat(prompt(`Enter sell price for ${asset.name} (total cost was $${asset.cost}):`)) || 0;
+		const flowNote = asset.flow < 0 
+			? ` (had been costing you $${Math.abs(asset.flow).toLocaleString()}/mo)` 
+			: '';
+
+		const sellPrice = parseFloat(prompt(
+			`Enter sell price for ${asset.name} (total cost was $${asset.cost})${flowNote}:`
+		)) || 0;
+
 		if (sellPrice <= 0) return alert("Invalid sell price.");
 
 		syncIdentityToState();
 		pushState();
+
 		let proceeds = sellPrice;
 		let glDelta = 0;
-
 		if (asset.liab > 0) {
 			proceeds -= asset.liab;
 			glDelta = proceeds - asset.down;
@@ -2067,18 +2160,52 @@
 		}
 
 		state.cash += proceeds;
-
-		// ADD THESE TWO LINES HERE
 		updateCashDisplay();
-
-		array.splice(index, 1);
 
 		const glStr = glDelta >= 0 ? `gain +$${glDelta.toLocaleString()}` : `loss -$${Math.abs(glDelta).toLocaleString()}`;
 		const debtNote = asset.liab > 0 ? ` (paid off $${asset.liab.toLocaleString()} debt)` : '';
-		log(`Sold ${type.toUpperCase()}: ${asset.name} for $${sellPrice.toLocaleString()}${debtNote} = net $${proceeds.toLocaleString()} (${glStr})`, proceeds);
+		const flowStopNote = asset.flow < 0 ? ` → stopped losing $${Math.abs(asset.flow).toLocaleString()}/mo` : '';
+
+		log(`Sold ${type.toUpperCase()}: ${asset.name} for $${sellPrice.toLocaleString()}${debtNote} = net $${proceeds.toLocaleString()} (${glStr})${flowStopNote}`, proceeds);
+
+		array.splice(index, 1);
+		debouncedCalc();
+	}
+	
+	function forecloseAsset(type, index) {
+		let asset, array;
+		if (type === 're') {
+			asset = state.re[index];
+			array = state.re;
+		} else {
+			return alert("Foreclosure only applies to Real Estate.");
+		}
+		if (!asset) return alert("Invalid asset.");
+
+		const hasMortgage = asset.liab > 0;
+		const mortgageNote = hasMortgage 
+			? `Mortgage $${asset.liab.toLocaleString()} forgiven (bank takes property)` 
+			: `No mortgage — property simply forfeited (e.g. tax lien, judgment, or forced sale)`;
+
+		if (!confirm(`FORECLOSURE on "${asset.name}"?\n\n• Asset completely forfeited (no cash proceeds)\n• ${mortgageNote}\n• Monthly cash flow (${formatCurrency(asset.flow)}) stops immediately\n\nThis is permanent — confirm?`)) {
+			return;
+		}
+
+		syncIdentityToState();
+		pushState();
+
+		// Remove asset
+		array.splice(index, 1);
+
+		// Log with clear distinction
+		const flowImpact = asset.flow >= 0 
+			? `lost +$${asset.flow.toLocaleString()}/mo income` 
+			: `stopped losing $${Math.abs(asset.flow).toLocaleString()}/mo`;
+		
+		log(`FORECLOSURE: "${asset.name}" forfeited\n• ${mortgageNote}\n• ${flowImpact}`, 0);
 
 		debouncedCalc();
-}
+	}
 
     function takeBankLoan() {
         const amount = parseFloat(document.getElementById('loanReq').value) || 0;
@@ -2268,15 +2395,18 @@
             </tr>`;
         }
 
-        state.re.forEach((a, i) => {
-            if (a.liab > 0) {
-                liabHtml += `<tr class="liability-re">
-                    <td>Mortgage: ${a.name}</td>
-                    <td>${formatCurrency(a.liab)}</td>
-                    <td><button class="action-btn" onclick="payOffMortgage('re', ${i})">Pay Off</button></td>
-                </tr>`;
-            }
-        });
+		state.re.forEach((a, i) => {
+			if (a.liab > 0) {
+				liabHtml += `<tr class="liability-re">
+					<td>Mortgage: ${a.name}</td>
+					<td>${formatCurrency(a.liab)}</td>
+					<td style="white-space: nowrap;">
+						<button class="action-btn" style="background:#8b0000; color:white; margin-right:4px;" onclick="forecloseAsset('re', ${i})">Foreclose</button>
+						<button class="action-btn" style="background:var(--green); color:#000;" onclick="payOffMortgage('re', ${i})">Pay Off</button>
+					</td>
+				</tr>`;
+			}
+		});
 
         state.biz.forEach((a, i) => {
             if (a.liab > 0) {
@@ -2310,26 +2440,60 @@
             if (d > 0) incHtml += `<tr class="asset-stock"><td>Div: ${s.name}</td><td>${formatCurrency(d)}</td></tr>`;
         });
         state.re.forEach(a => {
-            passive += a.flow;
-            incHtml += `<tr class="asset-re"><td>RE: ${a.name}</td><td>${formatCurrency(a.flow)}</td></tr>`;
-        });
-        state.biz.forEach(a => {
-            passive += a.flow;
-            incHtml += `<tr class="asset-biz"><td>Biz: ${a.name}</td><td>${formatCurrency(a.flow)}</td></tr>`;
-        });
+			passive += a.flow;
+			const flowColor = a.flow >= 0 ? 'var(--green)' : 'var(--red)';
+			const sign = a.flow >= 0 ? '+' : '';
+			incHtml += `<tr class="asset-re">
+				<td>RE: ${a.name}</td>
+				<td style="color:${flowColor}; font-weight:bold;">${sign}${formatCurrency(a.flow)}</td>
+			</tr>`;
+		});
+
+		state.biz.forEach(a => {
+			passive += a.flow;
+			const flowColor = a.flow >= 0 ? 'var(--green)' : 'var(--red)';
+			const sign = a.flow >= 0 ? '+' : '';
+			incHtml += `<tr class="asset-biz">
+				<td>Biz: ${a.name}</td>
+				<td style="color:${flowColor}; font-weight:bold;">${sign}${formatCurrency(a.flow)}</td>
+			</tr>`;
+		});
         document.getElementById('incomeBody').innerHTML = incHtml;
         document.getElementById('passiveDisp').innerText = formatCurrency(passive);
 
-        document.getElementById('stockBody').innerHTML = state.stocks.map((s,i) => 
-            `<tr><td style="color:var(--cyan)">${s.name} (${s.qty}sh)</td><td><button class="action-btn" onclick="sellStock(${i})">Sell</button></td></tr>`
-        ).join('');
-        document.getElementById('reBody').innerHTML = state.re.map((a,i) => 
-            `<tr><td style="color:var(--gold)">${a.name} (+${formatCurrency(a.flow)})</td><td><button class="action-btn" onclick="sellAsset('re',${i})">Sell</button></td></tr>`
-        ).join('');
-        document.getElementById('bizBody').innerHTML = state.biz.map((a,i) => 
-            `<tr><td style="color:var(--purple)">${a.name} (+${formatCurrency(a.flow)})</td><td><button class="action-btn" onclick="sellAsset('biz',${i})">Sell</button></td></tr>`
-        ).join('');
+        document.getElementById('stockBody').innerHTML = state.stocks.map((s,i) => `
+			<tr>
+				<td style="color:var(--cyan)">${s.name} (${s.qty}sh @ ${formatCurrency(s.cost)})</td>
+				<td style="text-align:right;">
+					<button class="action-btn" style="background:var(--red); margin-right:4px;" onclick="sellStock(${i})">Sell</button>
+					<button class="action-btn" style="background:var(--orange); color:#000;" onclick="applyRatRaceStockSplit(${i})">Split</button>
+				</td>
+			</tr>
+		`).join('');
+        document.getElementById('reBody').innerHTML = state.re.map((a,i) => {
+			const flowSign = a.flow >= 0 ? '+' : '';
+			const flowColor = a.flow >= 0 ? 'var(--gold)' : 'var(--red)';
+			return `<tr>
+				<td style="color:${flowColor}">${a.name} (${flowSign}${formatCurrency(a.flow)})</td>
+				<td style="text-align: right; white-space: nowrap;">
+					<button class="action-btn" style="background:#8b0000; color:white; margin-right:4px;" onclick="forecloseAsset('re', ${i})">Foreclose</button>
+					<button class="action-btn" style="background:var(--orange); margin-right:4px;" onclick="sellAsset('re', ${i})">Sell</button>
+					${a.liab > 0 ? `<button class="action-btn" style="background:var(--green); color:#000;" onclick="payOffMortgage('re', ${i})">Pay Off</button>` : ''}
+				</td>
+			</tr>`;
+		}).join('');
+        document.getElementById('bizBody').innerHTML = state.biz.map((a,i) => {
+			const flowColor = a.flow >= 0 ? 'var(--purple)' : 'var(--red)';
+			const sign = a.flow >= 0 ? '+' : '';
+			return `<tr>
+				<td style="color:$$   {flowColor}">   $${a.name} ($$   {sign}   $${formatCurrency(a.flow)})</td>
+				<td><button class="action-btn" onclick="sellAsset('biz',${i})">Sell</button></td>
+			</tr>`;
+		}).join('');
         return passive;
+		const passiveDisp = document.getElementById('passiveDisp');
+		passiveDisp.innerText = formatCurrency(passive);
+		passiveDisp.style.color = passive >= 0 ? 'var(--green)' : 'var(--red)';
     }
 
     function calc() {
@@ -2355,6 +2519,8 @@
         flowEl.innerText    = formatCurrency(flow);
         passiveEl.innerText = formatCurrency(passive);
         expEl.innerText     = formatCurrency(expTotal);
+		flowEl.innerText = formatCurrency(flow);
+		flowEl.style.color = flow >= 0 ? 'var(--purple)' : 'var(--red)';
 
         if (escapeBtn) {
             escapeBtn.style.display = (passive > expTotal && passive > 0) ? 'block' : 'none';
@@ -2805,18 +2971,6 @@
 
 			const row = document.createElement('tr');
 			row.innerHTML = `
-				<td style="padding:9px 12px; border:1px solid var(--ft-blue); color: var(--ft-blue); font-weight: bold;">
-					${stock.name || 'Unnamed Stock'}
-				</td>
-				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:right; color: var(--ft-blue); font-weight: bold;">
-					${stock.shares.toLocaleString()}
-				</td>
-				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:right; color: var(--red); font-weight: bold;">
-					${formatCurrency(stock.pricePerShare)}
-				</td>
-				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:right; color: var(--green); font-weight: bold;">
-					${formatCurrency(income)}
-				</td>
 				<td style="padding:9px 12px; border:1px solid var(--ft-blue); text-align:center;">
 					<button class="action-btn"
 							style="background: var(--red); color: white; font-size: 0.9em; padding: 6px 10px;"
@@ -3059,6 +3213,7 @@
 </body>
 
 </html>
+
 
 
 
