@@ -2121,36 +2121,32 @@ I<!DOCTYPE html>
 		const s = state.stocks[index];
 		if (!s) return alert("Invalid stock.");
 
-		const splitOptions = [
-			{ label: "2-for-1 Split (double shares, halve cost/share)", factor: 2 },
-			{ label: "3-for-1 Split", factor: 3 },
-			{ label: "Reverse 1-for-2 (halve shares, double cost/share)", factor: 0.5 },
-			{ label: "Custom factor", custom: true }
+		const options = [
+			{ label: "2-for-1 Split (double shares)", factor: 2 },
+			{ label: "1-for-2 Reverse Split (halve shares)", factor: 0.5 }
 		];
 
 		let promptText = `Stock Split for "${s.name}"?\nCurrent: ${s.qty} shares @ ${formatCurrency(s.cost)}\n\nOptions:\n`;
-		splitOptions.forEach((opt, i) => promptText += `${i+1}) ${opt.label}\n`);
+		options.forEach((opt, i) => promptText += `${i+1}) ${opt.label}\n`);
 
-		const choice = prompt(promptText + "\nEnter number (1–4) or 0 to cancel:");
+		const choice = prompt(promptText + "\nEnter number (1–2) or 0 to cancel:");
 		const num = parseInt(choice);
-		if (!num || num < 1 || num > splitOptions.length) return;
+		if (!num || num < 1 || num > options.length) return;
 
-		const opt = splitOptions[num - 1];
-		let factor = opt.custom 
-			? parseFloat(prompt("Enter custom factor (e.g. 2 for 2:1, 0.5 for reverse):")) 
-			: opt.factor;
-
-		if (isNaN(factor) || factor <= 0) return alert("Invalid factor.");
+		const factor = options[num - 1].factor;
 
 		pushState();
 
 		const oldQty = s.qty;
-		const oldCost = s.cost;
+		const oldTotalValue = s.qty * s.cost;
 
 		s.qty = Math.round(s.qty * factor);
-		s.cost = oldCost / factor;  // cost per share adjusts inversely
+		// Cost per share stays the same → total value changes
 
-		log(`Stock split on "${s.name}": ${factor >= 2 ? factor+'-for-1' : '1-for-'+Math.round(1/factor)} → ${oldQty} → ${s.qty} shares @ ${formatCurrency(oldCost)} → ${formatCurrency(s.cost)}`, 0);
+		const newTotalValue = s.qty * s.cost;
+
+		log(`Stock split on "${s.name}": ${factor >= 2 ? '2-for-1' : '1-for-2'} → ${oldQty} → ${s.qty} shares @ ${formatCurrency(s.cost)} each`, 0);
+		log(`→ Total value changed from ${formatCurrency(oldTotalValue)} to ${formatCurrency(newTotalValue)}`, newTotalValue - oldTotalValue);
 
 		// Re-render Rat Race assets table
 		renderAssetsAndPassive();
@@ -2497,10 +2493,12 @@ I<!DOCTYPE html>
 				<td style="color:var(--cyan)">${s.name} (${s.qty}sh @ ${formatCurrency(s.cost)})</td>
 				<td style="text-align:right;">
 					<button class="action-btn" style="background:var(--red); margin-right:4px;" onclick="sellStock(${i})">Sell</button>
-					<button class="action-btn" style="background:var(--orange); color:#000;" onclick="applyRatRaceStockSplit(${i})">Split</button>
+					<button class="action-btn" style="background:#4caf50; margin-right:4px;" onclick="applyRatRaceStockSplit(${i})">2:1 Split</button>
+					<button class="action-btn" style="background:#f44336; color:#fff;" onclick="applyRatRaceStockSplit(${i})">1:2 Reverse</button>
 				</td>
 			</tr>
 		`).join('');
+		
       document.getElementById('reBody').innerHTML = state.re.map((a,i) => {
 			const flowSign = a.flow >= 0 ? '+' : '';
 			const flowColor = a.flow >= 0 ? 'var(--gold)' : 'var(--red)';
