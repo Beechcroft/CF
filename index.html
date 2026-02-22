@@ -3436,7 +3436,7 @@
 	function attemptRussianOil() {
 		if (state.russianOilSucceeded) return;
 
-		const downPayment = 200000;
+		const downPayment = 300000;
 		if (!state.russianOilActive && state.cash < downPayment) {
 			alert(`Need $${downPayment.toLocaleString()} down payment for Russian Oil! You have $${state.cash.toLocaleString()}.`);
 			return;
@@ -3574,3 +3574,4 @@
 </body>
 
 </html>
+
