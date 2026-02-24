@@ -701,6 +701,56 @@
 		.id-field {
 			width: 100%;
 			min-width: auto;
+		/* --- Fix oversized Income quadrant --- */
+    #incomeQuad {
+        padding: 14px;                  /* Slightly less inner padding */
+    }
+    #incomeQuad .row#salRow {
+        font-size: 1.05em;              /* Smaller than other headers */
+        padding: 10px 0;
+    }
+    #incomeQuad input[type="number"]#sal {
+        font-size: 1.4em;               /* Still big enough, but not huge */
+        padding: 10px 12px;
+    }
+    #incomeQuad .total-display-row {
+        font-size: 1.2em;               /* Passive Income total — pull back a bit */
+        padding: 10px;
+    }
+
+    /* --- Fix oversized Doodad section (inside Expenses) --- */
+    #expAdd ~ .add-zone {               /* Targets the Doodad add-zone specifically */
+        padding: 12px;
+        margin-top: 8px;                /* Less vertical space */
+    }
+    #doodadName {
+        font-size: 1em;
+        padding: 10px;
+    }
+    #doodadAmt {
+        font-size: 1em;
+        padding: 10px;
+        width: 100% !important;         /* Full width but not oversized */
+    }
+    #expAdd ~ .add-zone .action-btn {   /* The − Deduct button */
+        font-size: 1.1em;
+        padding: 10px 16px;
+        min-height: 44px;
+    }
+
+    /* Optional: If the entire Expenses quadrant still feels too tall, add this */
+    #expenseQuad {
+        padding: 14px;                  /* Match Income's tighter padding */
+    }
+    #expenseQuad .add-zone:first-of-type { /* The regular expense + Add button zone */
+        padding: 12px;
+    }
+
+    /* General safety: cap input/button sizes so nothing explodes */
+    input, select, .action-btn {
+        max-width: 100%;
+        box-sizing: border-box;
+		
 		}
 	}
 	
@@ -3699,5 +3749,6 @@
 </body>
 
 </html>
+
 
 
