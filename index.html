@@ -701,6 +701,30 @@
 		.id-field {
 			width: 100%;
 			min-width: auto;
+		/* Targeted fix: Make Salary input and Doodad name input smaller & more proportional */
+    #sal {                          /* Salary number field */
+        font-size: 1.3em !important;   /* Was probably ~1.8–2em; this brings it down */
+        padding: 10px 12px !important;
+        min-height: 44px;              /* Still touch-friendly */
+    }
+
+    #doodadName {                   /* Doodad name text field */
+        font-size: 1.0em !important;   /* Normal readable size */
+        padding: 10px !important;
+        min-height: 44px;
+    }
+
+    /* Optional: If the Doodad amount field also feels too big, add this */
+    #doodadAmt {
+        font-size: 1.1em !important;
+        padding: 10px !important;
+    }
+
+    /* Safety: prevent any input from getting ridiculously large */
+    input[type="number"],
+    input[type="text"] {
+        max-font-size: 1.4em;  /* Fallback cap if something else overrides */
+		
 		}
 	}
 	
@@ -3699,5 +3723,6 @@
 </body>
 
 </html>
+
 
 
