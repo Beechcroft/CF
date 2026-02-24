@@ -564,18 +564,143 @@
 		overflow-x: hidden;
 	}
 
-	/* Mobile: stack vertically + allow text to grow/shrink more */
+	/* Mobile-specific optimizations for Rat Race (desktop remains unchanged) */
 	@media (max-width: 768px) {
-		#fastTrackSheet .header {
+		body {
+			padding-bottom: 100px; /* Extra space at bottom so last content isn't hidden under keyboard */
+		}
+
+		/* Save bar: keep sticky at top, compact + centered for vertical mobile use */
+		.save-bar {
+			padding: 8px 12px;
+			gap: 8px;
+			flex-wrap: wrap;
+			justify-content: center;
+			font-size: 0.9em;
+		}
+		.save-bar-section {
+			gap: 6px;
+		}
+		.btn-save, .dice-btn, .reset-btn {
+			padding: 8px 12px;
+			font-size: 0.9em;
+			min-height: 44px; /* Good touch target size */
+		}
+		.dice-area {
+			padding: 4px 10px;
+			font-size: 0.9em;
+		}
+
+		/* Header: Savings + Cash Flow stacked vertically, bigger & readable */
+		.header {
 			grid-template-columns: 1fr;
-			gap: 12px;
+			gap: 16px;
+			padding: 12px;
+			margin: 0 0 20px;
 		}
-		#ftCashDisp,
-		#ftFlowDisp {
-			font-size: clamp(1.8em, 10vw, 3.2em); /* Bigger base on mobile, but still scales */
+		.stat-box {
+			padding: 12px;
 		}
-		#ftCashDisp {
-			min-width: 140px;                     /* A bit more room when stacked */
+		.stat-value {
+			font-size: 2.2em;          /* Larger numbers for phone */
+			padding: 12px 16px;
+		}
+		.stat-label {
+			font-size: 1.1em;
+		}
+
+		/* Payday & Escape buttons: full-width, taller for easy tapping */
+		.action-bar {
+			margin: 20px auto 30px;
+			padding: 0 12px;
+			gap: 16px;
+		}
+		.btn-payday, .btn-escape {
+			font-size: 1.35em !important;
+			padding: 18px !important;
+			min-height: 56px;
+			border-radius: 12px;
+		}
+
+		/* Quadrants: stack vertically in desired order + card styling */
+		.grid {
+			display: flex;
+			flex-direction: column;
+			gap: 24px;
+		}
+
+		/* Use CSS order to rearrange visually without changing HTML structure */
+		#incomeQuad  { order: 1; }   /* Passive Income first */
+		#assetsQuad  { order: 2; }   /* Assets second */
+		#expenseQuad { order: 3; }   /* Expenses third */
+		#liabQuad    { order: 4; }   /* Liabilities fourth */
+
+		.quadrant {
+			background: var(--card);
+			border: 1px solid #444;
+			border-radius: 16px;
+			padding: 18px;
+			box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+			margin: 0;
+		}
+
+		.quadrant h1 {
+			font-size: 1.5em;
+			margin: 0 0 16px;
+			padding-left: 12px;
+			border-left: 5px solid var(--purple);
+		}
+
+		/* Input / button touch targets */
+		input, select {
+			font-size: 1.1em;
+			padding: 12px 14px;
+			min-height: 48px;
+		}
+		.action-btn {
+			min-width: 80px;
+			padding: 10px 14px;
+			font-size: 1em;
+		}
+		.add-zone {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 10px;
+		}
+		.add-zone input, .add-zone button {
+			width: 100%;
+		}
+
+		/* Ledger tables scroll horizontally if needed, but font bigger */
+		.ledger {
+			font-size: 0.95em;
+			overflow-x: auto;
+			display: block;
+		}
+
+		/* History log as final card */
+		.history-container {
+			background: var(--card);
+			border: 1px solid #444;
+			border-radius: 16px;
+			padding: 18px;
+			box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+			margin-top: 24px;
+		}
+		.history-list {
+			max-height: 220px;
+			font-size: 0.95em;
+		}
+
+		/* ID bar: full vertical stack */
+		.id-bar {
+			flex-direction: column;
+			gap: 20px;
+			padding-bottom: 20px;
+		}
+		.id-field {
+			width: 100%;
+			min-width: auto;
 		}
 	}
 	
@@ -884,7 +1009,7 @@
             </div>
         </div>
 
-        <div class="quadrant">
+        <div class="quadrant" id="assetsQuad">
             <h1>Assets (things that pay you)</h1>
             <div id="stockHeader" style="font-size:0.9em; color:var(--cyan); font-weight:bold; margin:12px 0 6px;">Stocks / Funds</div>
             <div class="add-zone" id="stockAdd">
@@ -3574,4 +3699,5 @@
 </body>
 
 </html>
+
 
