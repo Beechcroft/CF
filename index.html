@@ -565,168 +565,157 @@
 	}
 
 	/* Mobile-specific optimizations for Rat Race (desktop remains unchanged) */
-	@media (max-width: 768px) {
-		body {
-			padding-bottom: 100px; /* Extra space at bottom so last content isn't hidden under keyboard */
-		}
-
-		/* Save bar: keep sticky at top, compact + centered for vertical mobile use */
-		.save-bar {
-			padding: 8px 12px;
-			gap: 8px;
-			flex-wrap: wrap;
-			justify-content: center;
-			font-size: 0.9em;
-		}
-		.save-bar-section {
-			gap: 6px;
-		}
-		.btn-save, .dice-btn, .reset-btn {
-			padding: 8px 12px;
-			font-size: 0.9em;
-			min-height: 44px; /* Good touch target size */
-		}
-		.dice-area {
-			padding: 4px 10px;
-			font-size: 0.9em;
-		}
-
-		/* Header: Savings + Cash Flow stacked vertically, bigger & readable */
-		.header {
-			grid-template-columns: 1fr;
-			gap: 16px;
-			padding: 12px;
-			margin: 0 0 20px;
-		}
-		.stat-box {
-			padding: 12px;
-		}
-		.stat-value {
-			font-size: 2.2em;          /* Larger numbers for phone */
-			padding: 12px 16px;
-		}
-		.stat-label {
-			font-size: 1.1em;
-		}
-
-		/* Payday & Escape buttons: full-width, taller for easy tapping */
-		.action-bar {
-			margin: 20px auto 30px;
-			padding: 0 12px;
-			gap: 16px;
-		}
-		.btn-payday, .btn-escape {
-			font-size: 1.35em !important;
-			padding: 18px !important;
-			min-height: 56px;
-			border-radius: 12px;
-		}
-
-		/* Quadrants: stack vertically in desired order + card styling */
-		.grid {
-			display: flex;
-			flex-direction: column;
-			gap: 24px;
-		}
-
-		/* Use CSS order to rearrange visually without changing HTML structure */
-		#incomeQuad  { order: 1; }   /* Passive Income first */
-		#assetsQuad  { order: 2; }   /* Assets second */
-		#expenseQuad { order: 3; }   /* Expenses third */
-		#liabQuad    { order: 4; }   /* Liabilities fourth */
-
-		.quadrant {
-			background: var(--card);
-			border: 1px solid #444;
-			border-radius: 16px;
-			padding: 18px;
-			box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-			margin: 0;
-		}
-
-		.quadrant h1 {
-			font-size: 1.5em;
-			margin: 0 0 16px;
-			padding-left: 12px;
-			border-left: 5px solid var(--purple);
-		}
-
-		/* Input / button touch targets */
-		input, select {
-			font-size: 1.1em;
-			padding: 12px 14px;
-			min-height: 48px;
-		}
-		.action-btn {
-			min-width: 80px;
-			padding: 10px 14px;
-			font-size: 1em;
-		}
-		.add-zone {
-			flex-direction: column;
-			align-items: stretch;
-			gap: 10px;
-		}
-		.add-zone input, .add-zone button {
-			width: 100%;
-		}
-
-		/* Ledger tables scroll horizontally if needed, but font bigger */
-		.ledger {
-			font-size: 0.95em;
-			overflow-x: auto;
-			display: block;
-		}
-
-		/* History log as final card */
-		.history-container {
-			background: var(--card);
-			border: 1px solid #444;
-			border-radius: 16px;
-			padding: 18px;
-			box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-			margin-top: 24px;
-		}
-		.history-list {
-			max-height: 220px;
-			font-size: 0.95em;
-		}
-
-		/* ID bar: full vertical stack */
-		.id-bar {
-			flex-direction: column;
-			gap: 20px;
-			padding-bottom: 20px;
-		}
-		.id-field {
-			width: 100%;
-			min-width: auto;
-		/* Targeted fix: Make Salary input and Doodad name input smaller & more proportional */
-    #sal {                          /* Salary number field */
-        font-size: 1.3em !important;   /* Was probably ~1.8–2em; this brings it down */
-        padding: 10px 12px !important;
-        min-height: 44px;              /* Still touch-friendly */
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 100px; /* Extra space at bottom */
     }
 
-    #doodadName {                   /* Doodad name text field */
-        font-size: 1.0em !important;   /* Normal readable size */
-        padding: 10px !important;
+    /* Save bar: keep sticky at top, compact + centered */
+    .save-bar {
+        padding: 8px 12px;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+        font-size: 0.9em;
+    }
+    .save-bar-section { gap: 6px; }
+    .btn-save, .dice-btn, .reset-btn {
+        padding: 8px 12px;
+        font-size: 0.9em;
         min-height: 44px;
     }
+    .dice-area {
+        padding: 4px 10px;
+        font-size: 0.9em;
+    }
 
-    /* Optional: If the Doodad amount field also feels too big, add this */
+    /* Header: stacked, bigger & readable */
+    .header {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 12px;
+        margin: 0 0 20px;
+    }
+    .stat-box { padding: 12px; }
+    .stat-value {
+        font-size: 2.2em;
+        padding: 12px 16px;
+    }
+    .stat-label { font-size: 1.1em; }
+
+    /* Payday & Escape: full-width, tall */
+    .action-bar {
+        margin: 20px auto 30px;
+        padding: 0 12px;
+        gap: 16px;
+    }
+    .btn-payday, .btn-escape {
+        font-size: 1.35em !important;
+        padding: 18px !important;
+        min-height: 56px;
+        border-radius: 12px;
+    }
+
+    /* Quadrants: vertical stack + card look */
+    .grid {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+    #incomeQuad { order: 1; }
+    #assetsQuad { order: 2; }
+    #expenseQuad { order: 3; }
+    #liabQuad { order: 4; }
+
+    .quadrant {
+        background: var(--card);
+        border: 1px solid #444;
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        margin: 0;
+    }
+    .quadrant h1 {
+        font-size: 1.5em;
+        margin: 0 0 16px;
+        padding-left: 12px;
+        border-left: 5px solid var(--purple);
+    }
+
+    /* General inputs — base size (will be overridden below where needed) */
+    input, select {
+        font-size: 1.05em;          /* ← lowered slightly from 1.1em */
+        padding: 10px 12px;
+        min-height: 48px;
+    }
+
+    /* ── Targeted fix: Salary and Doodad name are now properly sized ── */
+    #sal {                          /* Salary input */
+        font-size: 1.25em !important;   /* Balanced — not tiny, not huge */
+        padding: 10px 12px !important;
+        width: 120px;                   /* Prevents it stretching too wide */
+    }
+
+    #doodadName {                   /* Doodad name input */
+        font-size: 1.0em !important;    /* Matches typical text input size */
+        padding: 10px !important;
+        flex: 1;                        /* Takes available space naturally */
+    }
+
+    /* Doodad amount — keep reasonable */
     #doodadAmt {
         font-size: 1.1em !important;
         padding: 10px !important;
+        width: 100% !important;
+        max-width: 140px;               /* Prevents over-expansion */
     }
 
-    /* Safety: prevent any input from getting ridiculously large */
-    input[type="number"],
-    input[type="text"] {
-        max-font-size: 1.4em;  /* Fallback cap if something else overrides */
-		
-		}
-	}
+    /* Action buttons & add zones */
+    .action-btn {
+        min-width: 80px;
+        padding: 10px 14px;
+        font-size: 1em;
+    }
+    .add-zone {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 12px;
+    }
+    .add-zone input, .add-zone button {
+        width: 100%;
+    }
+
+    /* Ledger & history */
+    .ledger {
+        font-size: 0.95em;
+        overflow-x: auto;
+        display: block;
+    }
+    .history-container {
+        background: var(--card);
+        border: 1px solid #444;
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        margin-top: 24px;
+    }
+    .history-list {
+        max-height: 220px;
+        font-size: 0.95em;
+    }
+
+    /* ID bar */
+    .id-bar {
+        flex-direction: column;
+        gap: 20px;
+        padding-bottom: 20px;
+    }
+    .id-field {
+        width: 100%;
+        min-width: auto;
+    }
+}
 	
 	.sheet {
 		width: 100%;
@@ -3723,6 +3712,7 @@
 </body>
 
 </html>
+
 
 
 
