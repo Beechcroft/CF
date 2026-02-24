@@ -670,27 +670,48 @@
         max-width: 140px;               /* Prevents over-expansion */
     }
 
-	/* Fine-tune Doodad row to feel more compact and balanced */
-.add-zone[style*="margin-top:10px"] {          /* Targets only the Doodad-specific add-zone */
-    padding: 10px 12px !important;            /* Slightly less padding */
-    gap: 8px !important;                      /* Tighter spacing between fields/button */
-    flex-direction: row !important;           /* ← Force horizontal layout on mobile too */
-    flex-wrap: nowrap !important;
-    align-items: center !important;
+/* Restore vertical stacking for Doodad row on narrow phones — Name → Cost → Button */
+@media (max-width: 480px) {  /* Very narrow phones — adjust breakpoint if needed (e.g. 520px) */
+    .add-zone[style*="margin-top:10px"] {
+        flex-direction: column !important;    /* Stack vertically again */
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    #doodadName {
+        width: 100% !important;               /* Full width when stacked */
+        flex: none !important;
+    }
+
+    #doodadAmt {
+        width: 100% !important;               /* Full width underneath */
+        max-width: none !important;
+        flex: none !important;
+    }
+
+    .add-zone[style*="margin-top:10px"] .action-btn {
+        width: 100% !important;               /* Button also full-width */
+    }
 }
 
-#doodadName {
-    font-size: 0.95em !important;             /* Slightly smaller text */
-    padding: 8px 10px !important;             /* Less padding → shorter height */
-    flex: 2 !important;                       /* Takes more space but not excessively */
-    min-width: 140px;
-}
+/* Optional: On slightly wider mobile (e.g. 481–768px), keep horizontal if it fits nicely */
+@media (min-width: 481px) and (max-width: 768px) {
+    .add-zone[style*="margin-top:10px"] {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
 
-#doodadAmt {
-    font-size: 1.0em !important;
-    padding: 8px 10px !important;
-    width: 110px !important;                  /* Fixed reasonable width */
-    flex: 0 0 auto !important;
+    #doodadName {
+        flex: 3 !important;                   /* Name takes more space */
+        min-width: 160px;
+    }
+
+    #doodadAmt {
+        flex: 1 !important;
+        max-width: 120px;
+    }
 }
 
 .add-zone[style*="margin-top:10px"] .action-btn {  /* − Deduct button */
@@ -3741,6 +3762,7 @@
 </body>
 
 </html>
+
 
 
 
