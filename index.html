@@ -670,6 +670,35 @@
         max-width: 140px;               /* Prevents over-expansion */
     }
 
+	/* Fine-tune Doodad row to feel more compact and balanced */
+.add-zone[style*="margin-top:10px"] {          /* Targets only the Doodad-specific add-zone */
+    padding: 10px 12px !important;            /* Slightly less padding */
+    gap: 8px !important;                      /* Tighter spacing between fields/button */
+    flex-direction: row !important;           /* ← Force horizontal layout on mobile too */
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+}
+
+#doodadName {
+    font-size: 0.95em !important;             /* Slightly smaller text */
+    padding: 8px 10px !important;             /* Less padding → shorter height */
+    flex: 2 !important;                       /* Takes more space but not excessively */
+    min-width: 140px;
+}
+
+#doodadAmt {
+    font-size: 1.0em !important;
+    padding: 8px 10px !important;
+    width: 110px !important;                  /* Fixed reasonable width */
+    flex: 0 0 auto !important;
+}
+
+.add-zone[style*="margin-top:10px"] .action-btn {  /* − Deduct button */
+    font-size: 1.0em !important;
+    padding: 8px 16px !important;
+    min-height: 40px !important;              /* Slightly shorter for balance */
+}
+
     /* Action buttons & add zones */
     .action-btn {
         min-width: 80px;
@@ -3712,6 +3741,7 @@
 </body>
 
 </html>
+
 
 
 
